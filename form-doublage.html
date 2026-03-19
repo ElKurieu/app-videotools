@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doublage Vidéo — Formulaire</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      color: #f0ede4;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 24px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1e1e1e;
+    }
+    .logo { font-size: 18px; font-weight: 600; letter-spacing: 0.05em; color: #D4AF37; text-decoration: none; }
+    .logo span { color: #f0ede4; font-weight: 300; }
+    .back-link {
+      font-size: 13px; color: #555; text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: #f0ede4; }
+
+    .page-wrapper {
+      max-width: 600px;
+      margin: 60px auto 80px;
+      padding: 0 24px;
+    }
+
+    .page-title {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .page-title h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+    .page-title h1 em { font-style: normal; color: #D4AF37; }
+    .page-title p { font-size: 15px; color: #666; }
+
+    /* CARD */
+    .form-card {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 16px;
+      padding: 36px;
+    }
+
+    /* SOURCE TABS */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .tab {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #2a2a2a;
+      background: #0a0a0a;
+      color: #666;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .tab:hover { border-color: #3a3a3a; color: #aaa; }
+    .tab.active {
+      border-color: #D4AF37;
+      background: #1a1500;
+      color: #D4AF37;
+    }
+
+    /* PANELS */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* DROPZONE */
+    .dropzone {
+      border: 2px dashed #2a2a2a;
+      border-radius: 10px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      margin-bottom: 8px;
+    }
+    .dropzone:hover, .dropzone.dragover {
+      border-color: #D4AF37;
+      background: #111500;
+    }
+    .dropzone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .dropzone-icon { font-size: 32px; margin-bottom: 12px; }
+    .dropzone h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .dropzone p { font-size: 12px; color: #555; }
+    .dropzone .file-selected {
+      font-size: 13px; color: #D4AF37; margin-top: 8px; font-weight: 500;
+    }
+
+    .limit-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #1a1200; border: 1px solid #3a2800;
+      border-radius: 6px; padding: 5px 10px;
+      font-size: 11px; color: #D4AF37;
+      margin-top: 8px;
+    }
+
+    /* FIELDS */
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block;
+      font-size: 13px; font-weight: 500; color: #aaa;
+      margin-bottom: 8px;
+    }
+    .field label span { color: #D4AF37; margin-left: 2px; }
+
+    .field input[type="text"],
+    .field input[type="url"],
+    .field select {
+      width: 100%;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: #f0ede4;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: #D4AF37;
+    }
+    .field input::placeholder { color: #444; }
+
+    .select-wrapper { position: relative; }
+    .select-wrapper::after {
+      content: '▾';
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      color: #555; pointer-events: none; font-size: 12px;
+    }
+    .field select option { background: #111; }
+
+    .fields-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* DIVIDER */
+    .divider {
+      border: none; border-top: 1px solid #1e1e1e;
+      margin: 28px 0;
+    }
+
+    /* SUBMIT */
+    .btn-submit {
+      width: 100%;
+      background: #D4AF37;
+      color: #0a0a0a;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      letter-spacing: 0.01em;
+    }
+    .btn-submit:hover:not(:disabled) {
+      background: #e5c44a;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(212, 175, 55, 0.2);
+    }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* SPINNER */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(0,0,0,0.2);
+      border-top-color: #0a0a0a;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* MESSAGES */
+    .message {
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-top: 20px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .message.success {
+      display: block;
+      background: #001a08;
+      border: 1px solid #003a14;
+      color: #4ade80;
+    }
+    .message.error {
+      display: block;
+      background: #1a0000;
+      border: 1px solid #3a0000;
+      color: #f87171;
+    }
+    .message strong { display: block; margin-bottom: 4px; font-size: 15px; }
+
+    /* VALIDATION */
+    .field-error { font-size: 12px; color: #f87171; margin-top: 6px; display: none; }
+    .field input.invalid, .field select.invalid { border-color: #f87171; }
+
+    @media (max-width: 500px) {
+      .fields-row { grid-template-columns: 1fr; }
+      .form-card { padding: 24px 20px; }
+      header { padding: 20px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="doublage.html">Auto<span>Doublage</span></a>
+  <a class="back-link" href="doublage.html">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Retour
+  </a>
+</header>
+
+<div class="page-wrapper">
+
+  <div class="page-title">
+    <h1>Lancer un <em>doublage</em></h1>
+    <p>Choisissez votre source vidéo et configurez le doublage</p>
+  </div>
+
+  <div class="form-card">
+
+    <!-- TABS SOURCE -->
+    <div class="tabs">
+      <button class="tab active" id="tab-upload" onclick="switchTab('upload')">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        Upload depuis mon PC
+      </button>
+      <button class="tab" id="tab-drive" onclick="switchTab('drive')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+        </svg>
+        Lien Google Drive
+      </button>
+    </div>
+
+    <!-- PANEL UPLOAD -->
+    <div class="panel active" id="panel-upload">
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.mkv,.webm" />
+        <div class="dropzone-icon">🎬</div>
+        <h3>Glissez votre vidéo ici</h3>
+        <p>ou cliquez pour sélectionner un fichier</p>
+        <p style="margin-top:6px; color:#444;">MP4 · MOV · AVI · MKV · WEBM</p>
+        <div class="file-selected" id="fileSelectedName"></div>
+      </div>
+      <div style="text-align:center;">
+        <span class="limit-badge">⚠️ Taille maximale : 16 MB — pour les fichiers plus lourds, utilisez Google Drive</span>
+      </div>
+    </div>
+
+    <!-- PANEL DRIVE -->
+    <div class="panel" id="panel-drive">
+      <div class="field">
+        <label>Lien Google Drive <span>*</span></label>
+        <input type="url" id="driveUrl" placeholder="https://drive.google.com/file/d/..." />
+        <div class="field-error" id="err-drive">Lien Google Drive requis</div>
+      </div>
+      <div style="background:#001a08; border:1px solid #003a14; border-radius:8px; padding:12px 14px; font-size:12px; color:#4ade80;">
+        ✓ Pas de limite de taille — recommandé pour les vidéos longues
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- LANGUES + VOIX -->
+    <div class="fields-row">
+      <div class="field">
+        <label>Langue d'origine <span>*</span></label>
+        <div class="select-wrapper">
+          <select id="langueOrigine">
+            <option value="">Choisir...</option>
+            <option value="Arabe">🇸🇦 Arabe</option>
+            <option value="Darija">🇲🇦 Darija</option>
+            <option value="Français">🇫🇷 Français</option>
+            <option value="Anglais">🇬🇧 Anglais</option>
+            <option value="Espagnol">🇪🇸 Espagnol</option>
+          </select>
+        </div>
+        <div class="field-error" id="err-origine">Langue d'origine requise</div>
+      </div>
+      <div class="field">
+        <label>Langue de doublage <span>*</span></label>
+        <div class="select-wrapper">
+          <select id="langueDoublage">
+            <option value="">Choisir...</option>
+            <option value="Français">🇫🇷 Français</option>
+            <option value="Anglais">🇬🇧 Anglais</option>
+            <option value="Espagnol">🇪🇸 Espagnol</option>
+            <option value="Arabe">🇸🇦 Arabe</option>
+          </select>
+        </div>
+        <div class="field-error" id="err-doublage">Langue de doublage requise</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Voix <span style="color:#555; font-weight:400;">(optionnel — nova par défaut)</span></label>
+      <div class="select-wrapper">
+        <select id="voix">
+          <option value="nova">nova — naturelle et chaleureuse</option>
+          <option value="alloy">alloy — équilibrée et claire</option>
+          <option value="echo">echo — douce et expressive</option>
+          <option value="fable">fable — dynamique</option>
+          <option value="onyx">onyx — grave et posée</option>
+          <option value="shimmer">shimmer — légère et vive</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      Lancer le doublage
+    </button>
+
+    <!-- MESSAGES -->
+    <div class="message success" id="msg-success">
+      <strong>✓ Doublage lancé avec succès !</strong>
+      Votre vidéo est en cours de traitement. Elle sera déposée automatiquement dans votre Google Drive dans quelques minutes.
+    </div>
+    <div class="message error" id="msg-error">
+      <strong>Une erreur est survenue</strong>
+      <span id="msg-error-text">Veuillez réessayer.</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-upload';
+  let activeTab = 'upload';
+
+  // TAB SWITCH
+  function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    hideMessages();
+  }
+
+  // DROPZONE
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileSelectedName = document.getElementById('fileSelectedName');
+
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    const maxSize = 16 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showError('Fichier trop lourd (' + (file.size / 1024 / 1024).toFixed(1) + ' MB). Limite : 16 MB. Utilisez Google Drive pour les fichiers plus lourds.');
+      fileInput.value = '';
+      fileSelectedName.textContent = '';
+      return;
+    }
+    fileSelectedName.textContent = '✓ ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + ' MB)';
+    hideMessages();
+  }
+
+  // VALIDATION
+  function validate() {
+    let ok = true;
+    // Source
+    if (activeTab === 'upload' && (!fileInput.files || !fileInput.files[0])) {
+      showError('Veuillez sélectionner un fichier vidéo.');
+      ok = false;
+    }
+    if (activeTab === 'drive') {
+      const url = document.getElementById('driveUrl').value.trim();
+      if (!url) {
+        document.getElementById('err-drive').style.display = 'block';
+        document.getElementById('driveUrl').classList.add('invalid');
+        ok = false;
+      } else {
+        document.getElementById('err-drive').style.display = 'none';
+        document.getElementById('driveUrl').classList.remove('invalid');
+      }
+    }
+    // Langues
+    if (!document.getElementById('langueOrigine').value) {
+      document.getElementById('err-origine').style.display = 'block';
+      document.getElementById('langueOrigine').classList.add('invalid');
+      ok = false;
+    } else {
+      document.getElementById('err-origine').style.display = 'none';
+      document.getElementById('langueOrigine').classList.remove('invalid');
+    }
+    if (!document.getElementById('langueDoublage').value) {
+      document.getElementById('err-doublage').style.display = 'block';
+      document.getElementById('langueDoublage').classList.add('invalid');
+      ok = false;
+    } else {
+      document.getElementById('err-doublage').style.display = 'none';
+      document.getElementById('langueDoublage').classList.remove('invalid');
+    }
+    return ok;
+  }
+
+  // SUBMIT
+  async function submitForm() {
+    hideMessages();
+    if (!validate()) return;
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Envoi en cours...';
+
+    const formData = new FormData();
+    if (activeTab === 'upload' && fileInput.files[0]) {
+      formData.append('file', fileInput.files[0]);
+    } else {
+      formData.append('driveUrl', document.getElementById('driveUrl').value.trim());
+    }
+    formData.append('langueOrigine', document.getElementById('langueOrigine').value);
+    formData.append('langueDoublage', document.getElementById('langueDoublage').value);
+    formData.append('voix', document.getElementById('voix').value);
+
+    try {
+      const res = await fetch(WEBHOOK_URL, { method: 'POST', body: formData });
+      if (res.ok || res.status === 200) {
+        document.getElementById('msg-success').style.display = 'block';
+        resetForm();
+      } else {
+        showError('Erreur serveur (' + res.status + '). Vérifiez que le workflow est actif.');
+      }
+    } catch (err) {
+      showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
+    }
+  }
+
+  function resetForm() {
+    fileInput.value = '';
+    fileSelectedName.textContent = '';
+    document.getElementById('driveUrl').value = '';
+    document.getElementById('langueOrigine').value = '';
+    document.getElementById('langueDoublage').value = '';
+    document.getElementById('voix').value = 'nova';
+  }
+
+  function hideMessages() {
+    document.getElementById('msg-success').style.display = 'none';
+    document.getElementById('msg-error').style.display = 'none';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('msg-error');
+    document.getElementById('msg-error-text').textContent = msg;
+    el.style.display = 'block';
+  }
+</script>
+</body>
+</html>
