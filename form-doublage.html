@@ -474,13 +474,9 @@
     formData.append('voix', document.getElementById('voix').value);
 
     try {
-      const res = await fetch(WEBHOOK_URL, { method: 'POST', body: formData });
-      if (res.ok || res.status === 200) {
-        document.getElementById('msg-success').style.display = 'block';
-        resetForm();
-      } else {
-        showError('Erreur serveur (' + res.status + '). Vérifiez que le workflow est actif.');
-      }
+      await fetch(WEBHOOK_URL, { method: 'POST', body: formData, mode: 'no-cors' });
+      document.getElementById('msg-success').style.display = 'block';
+      resetForm();
     } catch (err) {
       showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
     } finally {
