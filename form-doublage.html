@@ -373,6 +373,7 @@
 <script>
   const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-upload';
   let activeTab = 'upload';
+  let droppedFile = null;
 
   // TAB SWITCH
   function switchTab(tab) {
@@ -394,10 +395,10 @@
   dropzone.addEventListener('drop', e => {
     e.preventDefault();
     dropzone.classList.remove('dragover');
-    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files[0]) { droppedFile = e.dataTransfer.files[0]; handleFile(droppedFile); }
   });
   fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+    if (fileInput.files[0]) { droppedFile = null; handleFile(fileInput.files[0]); }
   });
 
   function handleFile(file) {
@@ -416,7 +417,8 @@
   function validate() {
     let ok = true;
     // Source
-    if (activeTab === 'upload' && (!fileInput.files || !fileInput.files[0])) {
+    const fileToUse = (fileInput.files && fileInput.files[0]) || droppedFile;
+    if (activeTab === 'upload' && !fileToUse) {
       showError('Veuillez sélectionner un fichier vidéo.');
       ok = false;
     }
@@ -461,8 +463,9 @@
     btn.innerHTML = '<div class="spinner"></div> Envoi en cours...';
 
     const formData = new FormData();
-    if (activeTab === 'upload' && fileInput.files[0]) {
-      formData.append('file', fileInput.files[0]);
+    const fileToSend = (fileInput.files && fileInput.files[0]) || droppedFile;
+    if (activeTab === 'upload' && fileToSend) {
+      formData.append('file', fileToSend);
     } else {
       formData.append('driveUrl', document.getElementById('driveUrl').value.trim());
     }
@@ -488,6 +491,7 @@
 
   function resetForm() {
     fileInput.value = '';
+    droppedFile = null;
     fileSelectedName.textContent = '';
     document.getElementById('driveUrl').value = '';
     document.getElementById('langueOrigine').value = '';
