@@ -394,7 +394,10 @@
     </div>
     <div class="message success" id="msg-success">
       <strong>✓ Doublage lancé !</strong>
-      Le traitement est en cours (1 à 3 min). Vous recevrez un message <strong>Telegram</strong> avec le lien de téléchargement dès que la vidéo est prête.
+      Le traitement est en cours (1 à 3 min). Vous recevrez un message <strong>Telegram</strong> avec le lien de téléchargement dès que la vidéo est prête.<br>
+      <a class="btn-download" id="btn-drive-folder" href="https://drive.google.com/drive/my-drive" target="_blank" style="margin-top:14px;">
+        📁 Ouvrir le dossier Drive
+      </a>
     </div>
     <div class="message success" id="msg-success-async" style="display:none;">
       <strong>✓ Doublage lancé !</strong>
@@ -534,6 +537,8 @@
       }
 
       document.getElementById('msg-progress').style.display = 'none';
+      const destUrl = document.getElementById('destFolderUrl').value.trim();
+      document.getElementById('btn-drive-folder').href = destUrl || 'https://drive.google.com/drive/my-drive';
       document.getElementById('msg-success').style.display = 'block';
       resetForm();
 
