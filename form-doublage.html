@@ -225,7 +225,27 @@
       border: 1px solid #3a0000;
       color: #f87171;
     }
+    .message.progress {
+      background: #0a0a1a;
+      border: 1px solid #1e1e3a;
+      color: #93c5fd;
+    }
     .message strong { display: block; margin-bottom: 4px; font-size: 15px; }
+
+    /* DOWNLOAD BUTTON */
+    .btn-download {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin-top: 14px;
+      background: #D4AF37; color: #0a0a0a;
+      font-size: 14px; font-weight: 700;
+      padding: 12px 20px; border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-download:hover { background: #e5c44a; }
+
+    /* FIELD HELP */
+    .field-help { font-size: 12px; color: #555; margin-top: 5px; }
 
     /* VALIDATION */
     .field-error { font-size: 12px; color: #f87171; margin-top: 6px; display: none; }
@@ -349,6 +369,15 @@
       </div>
     </div>
 
+    <hr class="divider" />
+
+    <!-- DESTINATION -->
+    <div class="field">
+      <label>Dossier de destination Google Drive <span style="color:#555; font-weight:400;">(optionnel)</span></label>
+      <input type="url" id="destFolderUrl" placeholder="https://drive.google.com/drive/folders/..." />
+      <div class="field-help">Laissez vide pour déposer dans votre Google Drive (racine). Collez l'URL d'un dossier Drive pour choisir la destination.</div>
+    </div>
+
     <!-- SUBMIT -->
     <button class="btn-submit" id="submitBtn" onclick="submitForm()">
       <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -358,9 +387,21 @@
     </button>
 
     <!-- MESSAGES -->
+    <div class="message progress" id="msg-progress">
+      <strong>⏳ Traitement en cours...</strong>
+      Extraction audio · Transcription · Traduction · Génération voix · Fusion vidéo<br>
+      <span style="font-size:12px; color:#6b8ec5;">Cela peut prendre 1 à 3 minutes selon la durée de la vidéo.</span>
+    </div>
     <div class="message success" id="msg-success">
-      <strong>✓ Doublage lancé avec succès !</strong>
-      Votre vidéo est en cours de traitement. Elle sera déposée automatiquement dans votre Google Drive dans quelques minutes.
+      <strong>✓ Doublage terminé !</strong>
+      <span id="msg-success-fichier"></span><br>
+      <a class="btn-download" id="btn-download" href="#" target="_blank">
+        ⬇ Ouvrir &amp; télécharger la vidéo
+      </a>
+    </div>
+    <div class="message success" id="msg-success-async" style="display:none;">
+      <strong>✓ Doublage lancé !</strong>
+      Votre vidéo est en cours de traitement. Elle sera déposée dans votre Google Drive dans quelques minutes.
     </div>
     <div class="message error" id="msg-error">
       <strong>Une erreur est survenue</strong>
@@ -371,7 +412,7 @@
 </div>
 
 <script>
-  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-v2';
+  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/nkekrPJ7DpKWH778/webhook_doublage/doublage-v2';
   let activeTab = 'upload';
   let droppedFile = null;
 
@@ -460,7 +501,10 @@
 
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Envoi en cours...';
+    btn.innerHTML = '<div class="spinner"></div> Traitement en cours...';
+
+    // Afficher le message de progression
+    document.getElementById('msg-progress').style.display = 'block';
 
     const formData = new FormData();
     const fileToSend = (fileInput.files && fileInput.files[0]) || droppedFile;
@@ -473,12 +517,50 @@
     formData.append('langueDoublage', document.getElementById('langueDoublage').value);
     formData.append('voix', document.getElementById('voix').value);
 
+    const destFolderUrl = document.getElementById('destFolderUrl').value.trim();
+    if (destFolderUrl) formData.append('destFolderUrl', destFolderUrl);
+
+    // Timeout de 5 minutes
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+
     try {
-      await fetch(WEBHOOK_URL, { method: 'POST', body: formData, mode: 'no-cors' });
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+
+      const data = await response.json();
+      document.getElementById('msg-progress').style.display = 'none';
+
+      // Afficher le lien de téléchargement
+      const nomFichier = data.fichierSortie || 'vidéo doublée';
+      document.getElementById('msg-success-fichier').textContent = 'Fichier : ' + nomFichier;
+      if (data.downloadUrl) {
+        const btnDl = document.getElementById('btn-download');
+        btnDl.href = data.downloadUrl;
+        btnDl.style.display = 'inline-flex';
+      }
       document.getElementById('msg-success').style.display = 'block';
       resetForm();
+
     } catch (err) {
-      showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+      clearTimeout(timeoutId);
+      document.getElementById('msg-progress').style.display = 'none';
+
+      if (err.name === 'AbortError') {
+        // Timeout — le traitement est peut-être encore en cours côté serveur
+        document.getElementById('msg-success-async').style.display = 'block';
+        resetForm();
+      } else {
+        showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+      }
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
@@ -490,13 +572,16 @@
     droppedFile = null;
     fileSelectedName.textContent = '';
     document.getElementById('driveUrl').value = '';
+    document.getElementById('destFolderUrl').value = '';
     document.getElementById('langueOrigine').value = '';
     document.getElementById('langueDoublage').value = '';
     document.getElementById('voix').value = 'nova';
   }
 
   function hideMessages() {
+    document.getElementById('msg-progress').style.display = 'none';
     document.getElementById('msg-success').style.display = 'none';
+    document.getElementById('msg-success-async').style.display = 'none';
     document.getElementById('msg-error').style.display = 'none';
   }
 
