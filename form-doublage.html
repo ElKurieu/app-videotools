@@ -393,11 +393,8 @@
       <span style="font-size:12px; color:#6b8ec5;">Cela peut prendre 1 à 3 minutes selon la durée de la vidéo.</span>
     </div>
     <div class="message success" id="msg-success">
-      <strong>✓ Doublage terminé !</strong>
-      <span id="msg-success-fichier"></span><br>
-      <a class="btn-download" id="btn-download" href="#" target="_blank">
-        ⬇ Ouvrir &amp; télécharger la vidéo
-      </a>
+      <strong>✓ Doublage lancé !</strong>
+      Le traitement est en cours (1 à 3 min). Vous recevrez un message <strong>Telegram</strong> avec le lien de téléchargement dès que la vidéo est prête.
     </div>
     <div class="message success" id="msg-success-async" style="display:none;">
       <strong>✓ Doublage lancé !</strong>
@@ -536,32 +533,7 @@
         throw new Error('HTTP ' + response.status);
       }
 
-      const blob = await response.blob();
       document.getElementById('msg-progress').style.display = 'none';
-
-      // Construire le nom du fichier : nom_original + _LANGUE.mp4
-      const langSuffix = document.getElementById('langueDoublage').value;
-      const langCodes = { 'Français': 'FR', 'Anglais': 'EN', 'Espagnol': 'ES', 'Arabe': 'AR' };
-      const suffix = '_' + (langCodes[langSuffix] || langSuffix.toUpperCase().substring(0, 2));
-      let baseName = 'video_doublee';
-      const fileToUse2 = (fileInput.files && fileInput.files[0]) || droppedFile;
-      if (activeTab === 'upload' && fileToUse2) {
-        baseName = fileToUse2.name.replace(/\.[^.]+$/, '');
-      }
-      const filename = baseName + suffix + '.mp4';
-
-      // Déclencher le téléchargement dans le navigateur
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
-
-      document.getElementById('msg-success-fichier').textContent = 'Fichier téléchargé : ' + filename;
-      document.getElementById('btn-download').style.display = 'none';
       document.getElementById('msg-success').style.display = 'block';
       resetForm();
 
