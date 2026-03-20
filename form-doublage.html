@@ -424,7 +424,7 @@
 
 <script>
   const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-v2';
-  const STATUS_URL  = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-status';
+  const SHEET_ID    = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
   let activeTab = 'upload';
   let droppedFile = null;
   let pollTimer = null;
@@ -565,7 +565,7 @@
     }
   }
 
-  // POLLING
+  // POLLING via Google Sheets gviz API
   function startPolling(jobId, destFolderUrl) {
     const startTime = Date.now();
     const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes max
@@ -592,24 +592,33 @@
       }
 
       try {
-        const res = await fetch(STATUS_URL + '?jobId=' + encodeURIComponent(jobId));
+        const query = encodeURIComponent("SELECT B,C,D WHERE A='" + jobId + "'");
+        const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tq=' + query + '&tqx=out:json';
+        const res = await fetch(url);
         if (!res.ok) return;
-        const data = await res.json();
+        const text = await res.text();
+        // Supprimer l'enveloppe JSONP : /*O_o*/\ngoogle.visualization.Query.setResponse({...});
+        const jsonStr = text.replace(/^[^(]+\(/, '').replace(/\);\s*$/, '');
+        const data = JSON.parse(jsonStr);
+        if (data.table && data.table.rows && data.table.rows.length > 0) {
+          const row = data.table.rows[0].c;
+          const driveUrl  = (row[0] && row[0].v) ? row[0].v : '';
+          const driveView = (row[1] && row[1].v) ? row[1].v : '';
 
-        if (data.status === 'done') {
-          clearInterval(pollTimer);
-          pollTimer = null;
-          progressEl.style.display = 'none';
-
-          document.getElementById('btn-download-video').href = data.driveUrl;
-          document.getElementById('btn-drive-view').href = data.driveView;
-          document.getElementById('btn-drive-folder').href = destFolderUrl || 'https://drive.google.com/drive/my-drive';
-          document.getElementById('msg-success').style.display = 'block';
+          if (driveUrl) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+            progressEl.style.display = 'none';
+            document.getElementById('btn-download-video').href = driveUrl;
+            document.getElementById('btn-drive-view').href = driveView;
+            document.getElementById('btn-drive-folder').href = destFolderUrl || 'https://drive.google.com/drive/my-drive';
+            document.getElementById('msg-success').style.display = 'block';
+          }
         }
       } catch (e) {
         // Erreur réseau passagère — on réessaie au prochain tick
       }
-    }, 3000);
+    }, 5000);
   }
 
   function resetForm() {
