@@ -244,6 +244,20 @@
     }
     .btn-download:hover { background: #e5c44a; }
 
+    /* ABANDON BUTTON */
+    .btn-abandon {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-top: 12px;
+      background: transparent; color: #666;
+      font-size: 13px; font-weight: 500;
+      padding: 8px 14px; border-radius: 6px;
+      border: 1px solid #2a2a2a;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-abandon:hover { border-color: #f87171; color: #f87171; background: #1a0000; }
+
     /* FIELD HELP */
     .field-help { font-size: 12px; color: #555; margin-top: 5px; }
 
@@ -390,7 +404,8 @@
     <div class="message progress" id="msg-progress">
       <strong>⏳ Traitement en cours...</strong>
       Extraction audio · Transcription · Traduction · Génération voix · Fusion vidéo<br>
-      <span style="font-size:12px; color:#6b8ec5;">Cela peut prendre 1 à 3 minutes selon la durée de la vidéo.</span>
+      <span style="font-size:12px; color:#6b8ec5;">Cela peut prendre 1 à 3 minutes selon la durée de la vidéo.</span><br>
+      <button class="btn-abandon" onclick="abandonPolling()">✕ Abandonner</button>
     </div>
     <div class="message success" id="msg-success">
       <strong>✓ Doublage terminé !</strong>
@@ -630,6 +645,12 @@
     document.getElementById('langueOrigine').value = '';
     document.getElementById('langueDoublage').value = '';
     document.getElementById('voix').value = 'nova';
+  }
+
+  function abandonPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    document.getElementById('msg-progress').style.display = 'none';
+    showError('Traitement abandonné. Le doublage continue en arrière-plan — vous recevrez un message Telegram dès que c\'est prêt.');
   }
 
   function hideMessages() {
