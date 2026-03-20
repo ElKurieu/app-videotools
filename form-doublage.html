@@ -412,7 +412,7 @@
 </div>
 
 <script>
-  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/nkekrPJ7DpKWH778/webhook_doublage/doublage-v2';
+  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-v2';
   let activeTab = 'upload';
   let droppedFile = null;
 
@@ -536,17 +536,32 @@
         throw new Error('HTTP ' + response.status);
       }
 
-      const data = await response.json();
+      const blob = await response.blob();
       document.getElementById('msg-progress').style.display = 'none';
 
-      // Afficher le lien de téléchargement
-      const nomFichier = data.fichierSortie || 'vidéo doublée';
-      document.getElementById('msg-success-fichier').textContent = 'Fichier : ' + nomFichier;
-      if (data.downloadUrl) {
-        const btnDl = document.getElementById('btn-download');
-        btnDl.href = data.downloadUrl;
-        btnDl.style.display = 'inline-flex';
+      // Construire le nom du fichier : nom_original + _LANGUE.mp4
+      const langSuffix = document.getElementById('langueDoublage').value;
+      const langCodes = { 'Français': 'FR', 'Anglais': 'EN', 'Espagnol': 'ES', 'Arabe': 'AR' };
+      const suffix = '_' + (langCodes[langSuffix] || langSuffix.toUpperCase().substring(0, 2));
+      let baseName = 'video_doublee';
+      const fileToUse2 = (fileInput.files && fileInput.files[0]) || droppedFile;
+      if (activeTab === 'upload' && fileToUse2) {
+        baseName = fileToUse2.name.replace(/\.[^.]+$/, '');
       }
+      const filename = baseName + suffix + '.mp4';
+
+      // Déclencher le téléchargement dans le navigateur
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
+      document.getElementById('msg-success-fichier').textContent = 'Fichier téléchargé : ' + filename;
+      document.getElementById('btn-download').style.display = 'none';
       document.getElementById('msg-success').style.display = 'block';
       resetForm();
 
