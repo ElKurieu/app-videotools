@@ -393,15 +393,26 @@
       <span style="font-size:12px; color:#6b8ec5;">Cela peut prendre 1 à 3 minutes selon la durée de la vidéo.</span>
     </div>
     <div class="message success" id="msg-success">
+      <strong>✓ Doublage terminé !</strong>
+      Votre vidéo est prête. Cliquez sur le bouton ci-dessous pour la télécharger.<br>
+      <a class="btn-download" id="btn-download-video" href="#" target="_blank" style="margin-top:14px;">
+        ⬇️ Télécharger la vidéo
+      </a>
+      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <a class="btn-download" id="btn-drive-view" href="#" target="_blank" style="background:#1a3a1a; color:#4ade80; font-size:13px; padding:10px 16px;">
+          👁 Voir sur Drive
+        </a>
+        <a class="btn-download" id="btn-drive-folder" href="https://drive.google.com/drive/my-drive" target="_blank" style="background:#1a1a1a; color:#aaa; font-size:13px; padding:10px 16px;">
+          📁 Ouvrir le dossier
+        </a>
+      </div>
+    </div>
+    <div class="message success" id="msg-success-async">
       <strong>✓ Doublage lancé !</strong>
-      Le traitement est en cours (1 à 3 min). Vous recevrez un message <strong>Telegram</strong> avec le lien de téléchargement dès que la vidéo est prête.<br>
-      <a class="btn-download" id="btn-drive-folder" href="https://drive.google.com/drive/my-drive" target="_blank" style="margin-top:14px;">
+      Le délai de polling a expiré mais le traitement continue. Vous recevrez un message <strong>Telegram</strong> avec le lien dès que c'est prêt.<br>
+      <a class="btn-download" id="btn-drive-folder-async" href="https://drive.google.com/drive/my-drive" target="_blank" style="margin-top:14px;">
         📁 Ouvrir le dossier Drive
       </a>
-    </div>
-    <div class="message success" id="msg-success-async" style="display:none;">
-      <strong>✓ Doublage lancé !</strong>
-      Votre vidéo est en cours de traitement. Elle sera déposée dans votre Google Drive dans quelques minutes.
     </div>
     <div class="message error" id="msg-error">
       <strong>Une erreur est survenue</strong>
@@ -413,8 +424,10 @@
 
 <script>
   const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-v2';
+  const STATUS_URL  = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-status';
   let activeTab = 'upload';
   let droppedFile = null;
+  let pollTimer = null;
 
   // TAB SWITCH
   function switchTab(tab) {
@@ -457,7 +470,6 @@
   // VALIDATION
   function validate() {
     let ok = true;
-    // Source
     const fileToUse = (fileInput.files && fileInput.files[0]) || droppedFile;
     if (activeTab === 'upload' && !fileToUse) {
       showError('Veuillez sélectionner un fichier vidéo.');
@@ -474,7 +486,6 @@
         document.getElementById('driveUrl').classList.remove('invalid');
       }
     }
-    // Langues
     if (!document.getElementById('langueOrigine').value) {
       document.getElementById('err-origine').style.display = 'block';
       document.getElementById('langueOrigine').classList.add('invalid');
@@ -499,12 +510,14 @@
     hideMessages();
     if (!validate()) return;
 
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Traitement en cours...';
+    btn.innerHTML = '<div class="spinner"></div> Envoi en cours...';
 
-    // Afficher le message de progression
-    document.getElementById('msg-progress').style.display = 'block';
+    const jobId = crypto.randomUUID();
+    const destFolderUrl = document.getElementById('destFolderUrl').value.trim();
 
     const formData = new FormData();
     const fileToSend = (fileInput.files && fileInput.files[0]) || droppedFile;
@@ -516,13 +529,11 @@
     formData.append('langueOrigine', document.getElementById('langueOrigine').value);
     formData.append('langueDoublage', document.getElementById('langueDoublage').value);
     formData.append('voix', document.getElementById('voix').value);
-
-    const destFolderUrl = document.getElementById('destFolderUrl').value.trim();
+    formData.append('jobId', jobId);
     if (destFolderUrl) formData.append('destFolderUrl', destFolderUrl);
 
-    // Timeout de 5 minutes
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000);
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
 
     try {
       const response = await fetch(WEBHOOK_URL, {
@@ -532,31 +543,73 @@
       });
       clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        throw new Error('HTTP ' + response.status);
-      }
+      if (!response.ok) throw new Error('HTTP ' + response.status);
 
-      document.getElementById('msg-progress').style.display = 'none';
-      const destUrl = document.getElementById('destFolderUrl').value.trim();
-      document.getElementById('btn-drive-folder').href = destUrl || 'https://drive.google.com/drive/my-drive';
-      document.getElementById('msg-success').style.display = 'block';
+      // Démarrer le polling
       resetForm();
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
+      startPolling(jobId, destFolderUrl);
 
     } catch (err) {
       clearTimeout(timeoutId);
       document.getElementById('msg-progress').style.display = 'none';
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
 
       if (err.name === 'AbortError') {
-        // Timeout — le traitement est peut-être encore en cours côté serveur
-        document.getElementById('msg-success-async').style.display = 'block';
-        resetForm();
+        showError('Le serveur ne répond pas. Vérifiez votre connexion et réessayez.');
       } else {
         showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
       }
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
     }
+  }
+
+  // POLLING
+  function startPolling(jobId, destFolderUrl) {
+    const startTime = Date.now();
+    const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes max
+    let dots = 0;
+
+    const progressEl = document.getElementById('msg-progress');
+    progressEl.style.display = 'block';
+
+    pollTimer = setInterval(async () => {
+      dots = (dots % 3) + 1;
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const min = Math.floor(elapsed / 60);
+      const sec = elapsed % 60;
+      const elapsedStr = min > 0 ? min + 'min ' + sec + 's' : sec + 's';
+      progressEl.querySelector('strong').textContent = '⏳ Traitement en cours' + '.'.repeat(dots) + ' (' + elapsedStr + ')';
+
+      if (Date.now() - startTime > MAX_POLL_MS) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+        progressEl.style.display = 'none';
+        document.getElementById('btn-drive-folder-async').href = destFolderUrl || 'https://drive.google.com/drive/my-drive';
+        document.getElementById('msg-success-async').style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch(STATUS_URL + '?jobId=' + encodeURIComponent(jobId));
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.status === 'done') {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          progressEl.style.display = 'none';
+
+          document.getElementById('btn-download-video').href = data.driveUrl;
+          document.getElementById('btn-drive-view').href = data.driveView;
+          document.getElementById('btn-drive-folder').href = destFolderUrl || 'https://drive.google.com/drive/my-drive';
+          document.getElementById('msg-success').style.display = 'block';
+        }
+      } catch (e) {
+        // Erreur réseau passagère — on réessaie au prochain tick
+      }
+    }, 3000);
   }
 
   function resetForm() {
@@ -578,9 +631,8 @@
   }
 
   function showError(msg) {
-    const el = document.getElementById('msg-error');
     document.getElementById('msg-error-text').textContent = msg;
-    el.style.display = 'block';
+    document.getElementById('msg-error').style.display = 'block';
   }
 </script>
 </body>
