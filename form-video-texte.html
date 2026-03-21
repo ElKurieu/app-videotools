@@ -333,25 +333,41 @@
     const langue = document.getElementById('langue').value;
     const vitesse = document.getElementById('vitesse').value;
 
-    const formData = new FormData();
-    formData.append('jobId', jobId);
-    formData.append('langue', langue);
-    formData.append('vitesse', vitesse);
-
-    if (activeTab === 'texte') {
-      formData.append('texte', document.getElementById('texteInput').value.trim());
-    } else if (activeTab === 'fichier') {
-      const f = (fileInput.files && fileInput.files[0]) || droppedFile;
-      formData.append('file', f);
-    } else {
-      formData.append('driveUrl', document.getElementById('driveUrl').value.trim());
-    }
-
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
 
+    let fetchOptions;
+
+    if (activeTab === 'fichier') {
+      // Lecture en base64 pour éviter les problèmes multipart avec n8n
+      const f = (fileInput.files && fileInput.files[0]) || droppedFile;
+      const fileBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(f);
+      });
+      fetchOptions = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId, langue, vitesse, fileBase64, fileName: f.name }),
+        signal: controller.signal
+      };
+    } else {
+      const formData = new FormData();
+      formData.append('jobId', jobId);
+      formData.append('langue', langue);
+      formData.append('vitesse', vitesse);
+      if (activeTab === 'texte') {
+        formData.append('texte', document.getElementById('texteInput').value.trim());
+      } else {
+        formData.append('driveUrl', document.getElementById('driveUrl').value.trim());
+      }
+      fetchOptions = { method: 'POST', body: formData, signal: controller.signal };
+    }
+
     try {
-      const response = await fetch(WEBHOOK_URL, { method: 'POST', body: formData, signal: controller.signal });
+      const response = await fetch(WEBHOOK_URL, fetchOptions);
       clearTimeout(timeoutId);
       if (!response.ok) throw new Error('HTTP ' + response.status);
 
