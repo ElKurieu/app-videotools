@@ -423,8 +423,11 @@
       </div>
     </div>
     <div class="message success" id="msg-success-async">
-      <strong>✓ Doublage lancé !</strong>
-      Le délai de polling a expiré mais le traitement continue. Vous recevrez un message <strong>Telegram</strong> avec le lien dès que c'est prêt.<br>
+      <strong>⏱ Traitement toujours en cours...</strong>
+      Le traitement prend plus de 10 minutes. Vous recevrez un message <strong>Telegram</strong> avec le lien dès que c'est prêt.<br>
+      <span style="font-size:12px; color:#6b8ec5; display:block; margin-top:8px;">
+        Si rien n'arrive, vérifiez que le lien Google Drive est partagé en accès public ("Toute personne disposant du lien").
+      </span>
       <a class="btn-download" id="btn-drive-folder-async" href="https://drive.google.com/drive/my-drive" target="_blank" style="margin-top:14px;">
         📁 Ouvrir le dossier Drive
       </a>
@@ -492,7 +495,14 @@
     }
     if (activeTab === 'drive') {
       const url = document.getElementById('driveUrl').value.trim();
+      const drivePattern = /drive\.google\.com\/(file\/d\/|open\?id=)/;
       if (!url) {
+        document.getElementById('err-drive').textContent = 'Lien Google Drive requis';
+        document.getElementById('err-drive').style.display = 'block';
+        document.getElementById('driveUrl').classList.add('invalid');
+        ok = false;
+      } else if (!drivePattern.test(url)) {
+        document.getElementById('err-drive').textContent = 'Format invalide — copiez le lien depuis Google Drive (clic droit → Obtenir le lien)';
         document.getElementById('err-drive').style.display = 'block';
         document.getElementById('driveUrl').classList.add('invalid');
         ok = false;
@@ -607,7 +617,7 @@
       }
 
       try {
-        const query = encodeURIComponent("SELECT B,C,D WHERE A='" + jobId + "'");
+        const query = encodeURIComponent("SELECT B,C,D,E WHERE A='" + jobId + "'");
         const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tq=' + query + '&tqx=out:json';
         const res = await fetch(url);
         if (!res.ok) return;
@@ -619,8 +629,15 @@
           const row = data.table.rows[0].c;
           const driveUrl  = (row[0] && row[0].v) ? row[0].v : '';
           const driveView = (row[1] && row[1].v) ? row[1].v : '';
+          const errorMsg  = (row[3] && row[3].v) ? row[3].v : '';
 
-          if (driveUrl) {
+          if (errorMsg) {
+            // Erreur remontée par n8n
+            clearInterval(pollTimer);
+            pollTimer = null;
+            progressEl.style.display = 'none';
+            showError('❌ ' + errorMsg);
+          } else if (driveUrl) {
             clearInterval(pollTimer);
             pollTimer = null;
             progressEl.style.display = 'none';
