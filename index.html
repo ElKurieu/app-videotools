@@ -1,1 +1,142 @@
-<html><body><h1>Application TikTok</h1></body></html>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outils Vidéo IA</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #D4AF37;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 1rem;
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .cards {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 800px;
+      width: 100%;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 320px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, transform 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card:hover {
+      border-color: #D4AF37;
+      transform: translateY(-4px);
+    }
+
+    .card-icon {
+      font-size: 2.5rem;
+    }
+
+    .card-title {
+      color: #D4AF37;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .card-desc {
+      color: #aaa;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .tag {
+      background: #2a2a2a;
+      color: #D4AF37;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+    }
+
+    footer {
+      margin-top: 3rem;
+      color: #444;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🎬 Outils Vidéo</h1>
+  <p class="subtitle">Génération et doublage automatique de vidéos</p>
+
+  <div class="cards">
+
+    <a class="card" href="form-video-texte.html">
+      <div class="card-icon">📝</div>
+      <div class="card-title">Vidéo depuis Texte</div>
+      <div class="card-desc">
+        Génère une vidéo avec voix de synthèse à partir d'un texte, d'un fichier PDF/DOCX ou d'un lien Google Drive.
+      </div>
+      <div class="card-tags">
+        <span class="tag">TTS</span>
+        <span class="tag">PDF</span>
+        <span class="tag">Google Drive</span>
+        <span class="tag">FR / EN / AR</span>
+      </div>
+    </a>
+
+    <a class="card" href="form-doublage.html">
+      <div class="card-icon">🎙️</div>
+      <div class="card-title">AutoDoublage</div>
+      <div class="card-desc">
+        Duble automatiquement une vidéo dans une autre langue : transcription, traduction et génération vocale.
+      </div>
+      <div class="card-tags">
+        <span class="tag">Doublage</span>
+        <span class="tag">Traduction</span>
+        <span class="tag">Multi-langue</span>
+        <span class="tag">Drive</span>
+      </div>
+    </a>
+
+  </div>
+
+  <footer>Propulsé par n8n · OpenAI</footer>
+
+</body>
+</html>
