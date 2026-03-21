@@ -310,7 +310,7 @@
     }
     if (activeTab === 'drive') {
       const url = document.getElementById('driveUrl').value.trim();
-      const drivePattern = /drive\.google\.com\/(file\/d\/|open\?id=)/;
+      const drivePattern = /drive\.google\.com\/(file\/d\/|open\?id=)|docs\.google\.com\/(document|spreadsheets|presentation)\/d\//;
       if (!url || !drivePattern.test(url)) {
         document.getElementById('err-drive').style.display = 'block'; ok = false;
       } else {
