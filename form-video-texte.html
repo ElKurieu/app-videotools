@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vidéo depuis Texte — Formulaire</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0a; color: #f0ede4; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; min-height: 100vh; }
+
+    header { padding: 24px 40px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e1e1e; }
+    .logo { font-size: 18px; font-weight: 600; letter-spacing: 0.05em; color: #D4AF37; text-decoration: none; }
+    .logo span { color: #f0ede4; font-weight: 300; }
+    .back-link { font-size: 13px; color: #555; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .back-link:hover { color: #f0ede4; }
+
+    .page-wrapper { max-width: 600px; margin: 60px auto 80px; padding: 0 24px; }
+    .page-title { text-align: center; margin-bottom: 40px; }
+    .page-title h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px; }
+    .page-title h1 em { font-style: normal; color: #D4AF37; }
+    .page-title p { font-size: 15px; color: #666; }
+
+    .form-card { background: #111; border: 1px solid #1e1e1e; border-radius: 16px; padding: 36px; }
+
+    /* TABS */
+    .tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 28px; }
+    .tab { padding: 10px 8px; border-radius: 8px; border: 1px solid #2a2a2a; background: #0a0a0a; color: #666; font-size: 12px; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.2s; }
+    .tab:hover { border-color: #3a3a3a; color: #aaa; }
+    .tab.active { border-color: #D4AF37; background: #1a1500; color: #D4AF37; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* DROPZONE */
+    .dropzone { border: 2px dashed #2a2a2a; border-radius: 10px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; margin-bottom: 8px; }
+    .dropzone:hover, .dropzone.dragover { border-color: #D4AF37; background: #111500; }
+    .dropzone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .dropzone-icon { font-size: 32px; margin-bottom: 12px; }
+    .dropzone h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .dropzone p { font-size: 12px; color: #555; }
+    .dropzone .file-selected { font-size: 13px; color: #D4AF37; margin-top: 8px; font-weight: 500; }
+    .limit-badge { display: inline-flex; align-items: center; gap: 5px; background: #1a1200; border: 1px solid #3a2800; border-radius: 6px; padding: 5px 10px; font-size: 11px; color: #D4AF37; margin-top: 8px; }
+
+    /* TEXTAREA */
+    .field-textarea { width: 100%; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; color: #f0ede4; font-size: 14px; font-family: inherit; resize: vertical; min-height: 160px; transition: border-color 0.2s; }
+    .field-textarea:focus { outline: none; border-color: #D4AF37; }
+    .field-textarea::placeholder { color: #444; }
+    .char-count { font-size: 11px; color: #444; text-align: right; margin-top: 4px; }
+
+    /* FIELDS */
+    .field { margin-bottom: 20px; }
+    .field label { display: block; font-size: 13px; font-weight: 500; color: #aaa; margin-bottom: 8px; }
+    .field label span { color: #D4AF37; margin-left: 2px; }
+    .field input[type="url"], .field select { width: 100%; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; color: #f0ede4; font-size: 14px; font-family: inherit; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; }
+    .field input:focus, .field select:focus { outline: none; border-color: #D4AF37; }
+    .field input::placeholder { color: #444; }
+    .select-wrapper { position: relative; }
+    .select-wrapper::after { content: '▾'; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #555; pointer-events: none; font-size: 12px; }
+    .field select option { background: #111; }
+    .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field-error { font-size: 12px; color: #f87171; margin-top: 6px; display: none; }
+    .field input.invalid, .field select.invalid { border-color: #f87171; }
+    .field-help { font-size: 12px; color: #555; margin-top: 5px; }
+
+    .divider { border: none; border-top: 1px solid #1e1e1e; margin: 28px 0; }
+
+    /* SUBMIT */
+    .btn-submit { width: 100%; background: #D4AF37; color: #0a0a0a; font-size: 15px; font-weight: 700; padding: 16px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 0.01em; }
+    .btn-submit:hover:not(:disabled) { background: #e5c44a; transform: translateY(-1px); box-shadow: 0 6px 24px rgba(212,175,55,0.2); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.2); border-top-color: #0a0a0a; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* MESSAGES */
+    .message { border-radius: 10px; padding: 20px 24px; margin-top: 20px; display: none; font-size: 14px; line-height: 1.6; }
+    .message.success { background: #001a08; border: 1px solid #003a14; color: #4ade80; }
+    .message.error { background: #1a0000; border: 1px solid #3a0000; color: #f87171; }
+    .message.progress { background: #0a0a1a; border: 1px solid #1e1e3a; color: #93c5fd; }
+    .message strong { display: block; margin-bottom: 4px; font-size: 15px; }
+
+    .btn-download { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; background: #D4AF37; color: #0a0a0a; font-size: 14px; font-weight: 700; padding: 12px 20px; border-radius: 8px; text-decoration: none; transition: background 0.2s; }
+    .btn-download:hover { background: #e5c44a; }
+    .btn-abandon { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; background: transparent; color: #666; font-size: 13px; font-weight: 500; padding: 8px 14px; border-radius: 6px; border: 1px solid #2a2a2a; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .btn-abandon:hover { border-color: #f87171; color: #f87171; background: #1a0000; }
+
+    @media (max-width: 500px) {
+      .fields-row { grid-template-columns: 1fr; }
+      .form-card { padding: 24px 20px; }
+      header { padding: 20px 24px; }
+      .tabs { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">Auto<span>Doublage</span></a>
+  <a class="back-link" href="index.html">
+    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Retour
+  </a>
+</header>
+
+<div class="page-wrapper">
+  <div class="page-title">
+    <h1>Vidéo depuis <em>texte</em></h1>
+    <p>Générez une vidéo avec voix à partir de texte, PDF ou DOCX</p>
+  </div>
+
+  <div class="form-card">
+
+    <!-- TABS SOURCE -->
+    <div class="tabs">
+      <button class="tab active" id="tab-texte" onclick="switchTab('texte')">✏️ Texte</button>
+      <button class="tab" id="tab-fichier" onclick="switchTab('fichier')">📄 PDF / DOCX</button>
+      <button class="tab" id="tab-drive" onclick="switchTab('drive')">☁️ Google Drive</button>
+    </div>
+
+    <!-- PANEL TEXTE -->
+    <div class="panel active" id="panel-texte">
+      <div class="field">
+        <label>Texte à lire <span>*</span></label>
+        <textarea class="field-textarea" id="texteInput" placeholder="Collez votre texte ici..." oninput="updateCharCount()"></textarea>
+        <div class="char-count"><span id="charCount">0</span> / 4096 caractères</div>
+        <div class="field-error" id="err-texte">Le texte est requis (minimum 5 caractères)</div>
+      </div>
+    </div>
+
+    <!-- PANEL FICHIER -->
+    <div class="panel" id="panel-fichier">
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept=".pdf,.docx" />
+        <div class="dropzone-icon">📄</div>
+        <h3>Glissez votre fichier ici</h3>
+        <p>ou cliquez pour sélectionner</p>
+        <p style="margin-top:6px; color:#444;">PDF · DOCX</p>
+        <div class="file-selected" id="fileSelectedName"></div>
+      </div>
+      <div style="text-align:center;">
+        <span class="limit-badge">⚠️ Taille maximale : 16 MB — utilisez Google Drive pour les fichiers plus lourds</span>
+      </div>
+      <div class="field-error" id="err-fichier">Veuillez sélectionner un fichier PDF ou DOCX</div>
+    </div>
+
+    <!-- PANEL DRIVE -->
+    <div class="panel" id="panel-drive">
+      <div class="field">
+        <label>Lien Google Drive <span>*</span></label>
+        <input type="url" id="driveUrl" placeholder="https://drive.google.com/file/d/..." />
+        <div class="field-error" id="err-drive">Lien Google Drive invalide</div>
+        <div class="field-help">Lien vers un fichier PDF, DOCX ou Google Docs partagé en accès public</div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <!-- LANGUE + VITESSE -->
+    <div class="fields-row">
+      <div class="field">
+        <label>Langue <span>*</span></label>
+        <div class="select-wrapper">
+          <select id="langue" onchange="onLangueChange()">
+            <option value="Francais">🇫🇷 Français</option>
+            <option value="English">🇬🇧 Anglais</option>
+            <option value="Arabe">🇸🇦 Arabe</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Vitesse de défilement</label>
+        <div class="select-wrapper">
+          <select id="vitesse">
+            <option value="0.7">0.7 — lente</option>
+            <option value="0.8">0.8 — modérée</option>
+            <option value="0.9" selected>0.9 — normale (défaut)</option>
+            <option value="1.0">1.0 — rapide</option>
+            <option value="1.1">1.1 — très rapide</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="field" id="field-voix-info" style="display:none;">
+      <div style="background:#0a1a1a; border:1px solid #1a3a3a; border-radius:8px; padding:12px 14px; font-size:12px; color:#6b8ec5;">
+        🎙️ Arabe : voix synthétique fixe (OpenAI TTS · alloy)
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      Générer la vidéo
+    </button>
+
+    <!-- MESSAGES -->
+    <div class="message progress" id="msg-progress">
+      <strong>⏳ Génération en cours...</strong>
+      Synthèse vocale · Génération vidéo · Sauvegarde<br>
+      <span style="font-size:12px; color:#6b8ec5;">Cela peut prendre 1 à 5 minutes selon la longueur du texte.</span><br>
+      <button class="btn-abandon" onclick="abandonPolling()">✕ Abandonner</button>
+    </div>
+    <div class="message success" id="msg-success">
+      <strong>✓ Vidéo prête !</strong>
+      Votre vidéo est générée. Cliquez ci-dessous pour la télécharger.<br>
+      <a class="btn-download" id="btn-download-video" href="#" target="_blank" style="margin-top:14px;">
+        ⬇️ Télécharger la vidéo
+      </a>
+      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <a class="btn-download" id="btn-drive-view" href="#" target="_blank" style="background:#1a3a1a; color:#4ade80; font-size:13px; padding:10px 16px;">
+          👁 Voir sur Drive
+        </a>
+      </div>
+    </div>
+    <div class="message success" id="msg-success-async">
+      <strong>⏱ Génération toujours en cours...</strong>
+      Le traitement peut prendre plus de 10 minutes. Vous recevrez un message <strong>Telegram</strong> avec le lien dès que c'est prêt.<br>
+      <span style="font-size:12px; color:#6b8ec5; display:block; margin-top:8px;">
+        Si rien n'arrive, vérifiez que le lien Google Drive est partagé en accès public.
+      </span>
+    </div>
+    <div class="message error" id="msg-error">
+      <strong>Une erreur est survenue</strong>
+      <span id="msg-error-text">Veuillez réessayer.</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/video-tts-web';
+  const SHEET_ID    = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
+
+  let activeTab = 'texte';
+  let droppedFile = null;
+  let pollTimer = null;
+
+  function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    hideMessages();
+  }
+
+  function onLangueChange() {
+    const langue = document.getElementById('langue').value;
+    document.getElementById('field-voix-info').style.display = langue === 'Arabe' ? 'block' : 'none';
+  }
+
+  function updateCharCount() {
+    const v = document.getElementById('texteInput').value;
+    document.getElementById('charCount').textContent = v.length;
+    if (v.length > 4096) document.getElementById('charCount').style.color = '#f87171';
+    else document.getElementById('charCount').style.color = '#444';
+  }
+
+  // DROPZONE
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const fileSelectedName = document.getElementById('fileSelectedName');
+
+  dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault(); dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) { droppedFile = e.dataTransfer.files[0]; handleFile(droppedFile); }
+  });
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) { droppedFile = null; handleFile(fileInput.files[0]); }
+  });
+
+  function handleFile(file) {
+    const maxSize = 16 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showError('Fichier trop lourd (' + (file.size/1024/1024).toFixed(1) + ' MB). Limite : 16 MB. Utilisez Google Drive pour les fichiers plus lourds.');
+      fileInput.value = ''; fileSelectedName.textContent = ''; return;
+    }
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!['pdf','docx'].includes(ext)) {
+      showError('Format non supporté. Utilisez un fichier PDF ou DOCX.');
+      fileInput.value = ''; fileSelectedName.textContent = ''; return;
+    }
+    fileSelectedName.textContent = '✓ ' + file.name + ' (' + (file.size/1024/1024).toFixed(1) + ' MB)';
+    hideMessages();
+  }
+
+  function validate() {
+    let ok = true;
+    if (activeTab === 'texte') {
+      const t = document.getElementById('texteInput').value.trim();
+      if (t.length < 5) {
+        document.getElementById('err-texte').style.display = 'block'; ok = false;
+      } else {
+        document.getElementById('err-texte').style.display = 'none';
+      }
+    }
+    if (activeTab === 'fichier') {
+      const f = (fileInput.files && fileInput.files[0]) || droppedFile;
+      if (!f) {
+        document.getElementById('err-fichier').style.display = 'block'; ok = false;
+      } else {
+        document.getElementById('err-fichier').style.display = 'none';
+      }
+    }
+    if (activeTab === 'drive') {
+      const url = document.getElementById('driveUrl').value.trim();
+      const drivePattern = /drive\.google\.com\/(file\/d\/|open\?id=)/;
+      if (!url || !drivePattern.test(url)) {
+        document.getElementById('err-drive').style.display = 'block'; ok = false;
+      } else {
+        document.getElementById('err-drive').style.display = 'none';
+      }
+    }
+    return ok;
+  }
+
+  async function submitForm() {
+    hideMessages();
+    if (!validate()) return;
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Envoi en cours...';
+
+    const jobId = crypto.randomUUID();
+    const langue = document.getElementById('langue').value;
+    const vitesse = document.getElementById('vitesse').value;
+
+    const formData = new FormData();
+    formData.append('jobId', jobId);
+    formData.append('langue', langue);
+    formData.append('vitesse', vitesse);
+
+    if (activeTab === 'texte') {
+      formData.append('texte', document.getElementById('texteInput').value.trim());
+    } else if (activeTab === 'fichier') {
+      const f = (fileInput.files && fileInput.files[0]) || droppedFile;
+      formData.append('file', f);
+    } else {
+      formData.append('driveUrl', document.getElementById('driveUrl').value.trim());
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+    try {
+      const response = await fetch(WEBHOOK_URL, { method: 'POST', body: formData, signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Générer la vidéo';
+      startPolling(jobId);
+
+    } catch (err) {
+      clearTimeout(timeoutId);
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Générer la vidéo';
+      if (err.name === 'AbortError') showError('Le serveur ne répond pas. Vérifiez votre connexion et réessayez.');
+      else showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+    }
+  }
+
+  function startPolling(jobId) {
+    const startTime = Date.now();
+    const MAX_POLL_MS = 10 * 60 * 1000;
+    let dots = 0;
+    const progressEl = document.getElementById('msg-progress');
+    progressEl.style.display = 'block';
+
+    pollTimer = setInterval(async () => {
+      dots = (dots % 3) + 1;
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const min = Math.floor(elapsed / 60), sec = elapsed % 60;
+      const elapsedStr = min > 0 ? min + 'min ' + sec + 's' : sec + 's';
+      progressEl.querySelector('strong').textContent = '⏳ Génération en cours' + '.'.repeat(dots) + ' (' + elapsedStr + ')';
+
+      if (Date.now() - startTime > MAX_POLL_MS) {
+        clearInterval(pollTimer); pollTimer = null;
+        progressEl.style.display = 'none';
+        document.getElementById('msg-success-async').style.display = 'block';
+        return;
+      }
+
+      try {
+        const query = encodeURIComponent("SELECT B,C,D,E WHERE A='" + jobId + "'");
+        const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tq=' + query + '&tqx=out:json';
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const text = await res.text();
+        const jsonStr = text.replace(/^[^(]+\(/, '').replace(/\);\s*$/, '');
+        const data = JSON.parse(jsonStr);
+        if (data.table && data.table.rows && data.table.rows.length > 0) {
+          const row = data.table.rows[0].c;
+          const driveUrl  = (row[0] && row[0].v) ? row[0].v : '';
+          const driveView = (row[1] && row[1].v) ? row[1].v : '';
+          const errorMsg  = (row[3] && row[3].v) ? row[3].v : '';
+
+          if (errorMsg) {
+            clearInterval(pollTimer); pollTimer = null;
+            progressEl.style.display = 'none';
+            showError('❌ ' + errorMsg);
+          } else if (driveUrl) {
+            clearInterval(pollTimer); pollTimer = null;
+            progressEl.style.display = 'none';
+            document.getElementById('btn-download-video').href = driveUrl;
+            document.getElementById('btn-drive-view').href = driveView;
+            document.getElementById('msg-success').style.display = 'block';
+          }
+        }
+      } catch (e) { /* erreur réseau passagère */ }
+    }, 5000);
+  }
+
+  function abandonPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    document.getElementById('msg-progress').style.display = 'none';
+    showError('Génération abandonnée. Le traitement continue en arrière-plan — vous recevrez un message Telegram dès que c\'est prêt.');
+  }
+
+  function hideMessages() {
+    document.getElementById('msg-progress').style.display = 'none';
+    document.getElementById('msg-success').style.display = 'none';
+    document.getElementById('msg-success-async').style.display = 'none';
+    document.getElementById('msg-error').style.display = 'none';
+  }
+
+  function showError(msg) {
+    document.getElementById('msg-error-text').textContent = msg;
+    document.getElementById('msg-error').style.display = 'block';
+  }
+</script>
+</body>
+</html>
