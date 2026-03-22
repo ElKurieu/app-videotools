@@ -60,7 +60,7 @@
     /* SOURCE TABS */
     .tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
       margin-bottom: 28px;
     }
@@ -267,6 +267,7 @@
 
     @media (max-width: 500px) {
       .fields-row { grid-template-columns: 1fr; }
+      .tabs { grid-template-columns: 1fr; }
       .form-card { padding: 24px 20px; }
       header { padding: 20px 24px; }
     }
@@ -307,6 +308,12 @@
         </svg>
         Lien Google Drive
       </button>
+      <button class="tab" id="tab-youtube" onclick="switchTab('youtube')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 00.5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 002.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 002.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/>
+        </svg>
+        YouTube
+      </button>
     </div>
 
     <!-- PANEL UPLOAD -->
@@ -333,6 +340,19 @@
       </div>
       <div style="background:#001a08; border:1px solid #003a14; border-radius:8px; padding:12px 14px; font-size:12px; color:#4ade80;">
         ✓ Pas de limite de taille — recommandé pour les vidéos longues
+      </div>
+    </div>
+
+    <!-- PANEL YOUTUBE -->
+    <div class="panel" id="panel-youtube">
+      <div class="field">
+        <label>Lien YouTube <span>*</span></label>
+        <input type="url" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
+        <div class="field-error" id="err-youtube">Lien YouTube invalide</div>
+        <div class="field-help">Fonctionne avec les vidéos YouTube et YouTube Shorts</div>
+      </div>
+      <div style="background:#1a0000; border:1px solid #3a0a0a; border-radius:8px; padding:12px 14px; font-size:12px; color:#f87171;">
+        ⚠️ Vidéos longues : le téléchargement peut prendre 1 à 2 minutes avant le début du traitement.
       </div>
     </div>
 
@@ -513,6 +533,18 @@
         document.getElementById('driveUrl').classList.remove('invalid');
       }
     }
+    if (activeTab === 'youtube') {
+      const url = document.getElementById('youtubeUrl').value.trim();
+      const ytPattern = /^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)/;
+      if (!url || !ytPattern.test(url)) {
+        document.getElementById('err-youtube').style.display = 'block';
+        document.getElementById('youtubeUrl').classList.add('invalid');
+        ok = false;
+      } else {
+        document.getElementById('err-youtube').style.display = 'none';
+        document.getElementById('youtubeUrl').classList.remove('invalid');
+      }
+    }
     if (!document.getElementById('langueOrigine').value) {
       document.getElementById('err-origine').style.display = 'block';
       document.getElementById('langueOrigine').classList.add('invalid');
@@ -550,6 +582,8 @@
     const fileToSend = (fileInput.files && fileInput.files[0]) || droppedFile;
     if (activeTab === 'upload' && fileToSend) {
       formData.append('file', fileToSend);
+    } else if (activeTab === 'youtube') {
+      formData.append('youtubeUrl', document.getElementById('youtubeUrl').value.trim());
     } else {
       formData.append('driveUrl', document.getElementById('driveUrl').value.trim());
     }
@@ -660,6 +694,7 @@
     droppedFile = null;
     fileSelectedName.textContent = '';
     document.getElementById('driveUrl').value = '';
+    document.getElementById('youtubeUrl').value = '';
     document.getElementById('destFolderUrl').value = '';
     document.getElementById('langueOrigine').value = '';
     document.getElementById('langueDoublage').value = '';
