@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generer un Shot — ElKurieu</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #111;
+      --card2: #181818;
+      --gold: #D4AF37;
+      --gold-dim: #b8962e;
+      --text: #e8e8e8;
+      --text-dim: #888;
+      --border: #2a2a2a;
+      --radius: 12px;
+      --success: #2d6a4f;
+      --error: #7b2d2d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Navigation ── */
+    nav {
+      background: rgba(10,10,10,0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+    .nav-brand {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+    /* ── Hero ── */
+    .hero {
+      max-width: 680px;
+      margin: 3rem auto 2rem;
+      padding: 0 1.5rem;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 0.6rem;
+    }
+    .hero h1 span { color: var(--gold); }
+    .hero p { color: var(--text-dim); font-size: 1rem; line-height: 1.6; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      background: rgba(212,175,55,0.12);
+      color: var(--gold);
+      border: 1px solid rgba(212,175,55,0.3);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Conteneur principal ── */
+    .container {
+      max-width: 680px;
+      margin: 0 auto 4rem;
+      padding: 0 1.5rem;
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      background: var(--card);
+      border-radius: var(--radius) var(--radius) 0 0;
+      border: 1px solid var(--border);
+      border-bottom: none;
+      overflow: hidden;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+    }
+    .tab-btn.active {
+      color: var(--gold);
+      background: var(--card2);
+      border-bottom-color: var(--gold);
+    }
+    .tab-btn:hover:not(.active) { color: var(--text); background: #151515; }
+
+    /* ── Panels ── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Card de formulaire ── */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0 0 var(--radius) var(--radius);
+      padding: 2rem;
+    }
+
+    /* ── Champs ── */
+    .field { margin-bottom: 1.4rem; }
+    .field label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem;
+    }
+    .field input[type="text"],
+    .field input[type="url"],
+    .field input[type="email"] {
+      width: 100%;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--gold); }
+    .field input::placeholder { color: #555; }
+
+    .field-hint {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 0.4rem;
+    }
+
+    /* ── Bouton principal ── */
+    .btn-primary {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── Section statut ── */
+    .status-section { display: none; margin-top: 1.5rem; }
+    .status-section.visible { display: block; }
+
+    .status-card {
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+    .status-card.progress { background: var(--card2); }
+    .status-card.success  { background: rgba(45,106,79,0.15); border-color: rgba(45,106,79,0.4); }
+    .status-card.error    { background: rgba(123,45,45,0.15); border-color: rgba(123,45,45,0.4); }
+
+    .status-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .status-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .status-msg { font-size: 0.9rem; color: var(--text-dim); line-height: 1.5; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 28px; height: 28px;
+      border: 3px solid rgba(212,175,55,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 0.75rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Timer */
+    .timer { color: var(--gold); font-weight: 700; font-size: 0.9rem; margin-top: 0.5rem; }
+
+    /* Boutons résultat */
+    .result-actions { display: flex; gap: 0.75rem; margin-top: 1.2rem; flex-wrap: wrap; }
+    .btn-result {
+      flex: 1;
+      min-width: 140px;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity 0.2s;
+    }
+    .btn-result.primary {
+      background: var(--gold);
+      color: #000;
+      border: none;
+    }
+    .btn-result.secondary {
+      background: none;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+    }
+    .btn-result:hover { opacity: 0.85; }
+
+    /* Bouton annuler polling */
+    .btn-cancel {
+      background: none;
+      border: 1px solid #444;
+      color: var(--text-dim);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-cancel:hover { border-color: #777; color: var(--text); }
+
+    /* Progression bar */
+    .progress-bar-wrap {
+      background: #222;
+      border-radius: 4px;
+      height: 4px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      width: 0%;
+      transition: width 1s linear;
+      border-radius: 4px;
+    }
+
+    /* ── Infos bas de page ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+    .info-card h3 { font-size: 0.85rem; color: var(--gold); margin-bottom: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-card p { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 2rem;
+    }
+    footer a { color: var(--gold); text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="index.html">ElKurieu</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="form-doublage.html">Doublage</a></li>
+    <li><a href="form-shot.html" style="color:var(--gold)">Shot</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="badge">Nouveau</div>
+  <h1>Generer un <span>Shot Video</span></h1>
+  <p>Colle le lien d'une video YouTube ou Google Drive. L'IA analyse la transcription et extrait automatiquement le meilleur moment de 3 minutes.</p>
+</section>
+
+<div class="container">
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('youtube')">YouTube</button>
+    <button class="tab-btn" onclick="switchTab('drive')">Google Drive</button>
+  </div>
+
+  <!-- Tab YouTube -->
+  <div id="panel-youtube" class="tab-panel active">
+    <div class="form-card">
+      <div class="field">
+        <label>URL YouTube</label>
+        <input type="url" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." />
+        <p class="field-hint">Videos longues recommandees (10 min+) pour un meilleur resultat</p>
+      </div>
+      <div class="field">
+        <label>Votre email</label>
+        <input type="email" id="yt-email" placeholder="votre@email.com" />
+        <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
+      </div>
+      <button class="btn-primary" id="yt-btn" onclick="submitShot('youtube')">
+        Generer le Shot
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Google Drive -->
+  <div id="panel-drive" class="tab-panel">
+    <div class="form-card">
+      <div class="field">
+        <label>URL Google Drive</label>
+        <input type="url" id="drive-url" placeholder="https://drive.google.com/file/d/..." />
+        <p class="field-hint">Le fichier doit etre partage en lecture avec le compte de traitement</p>
+      </div>
+      <div class="field">
+        <label>Votre email</label>
+        <input type="email" id="drive-email" placeholder="votre@email.com" />
+        <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
+      </div>
+      <button class="btn-primary" id="drive-btn" onclick="submitShot('drive')">
+        Generer le Shot
+      </button>
+    </div>
+  </div>
+
+  <!-- Zone statut -->
+  <div id="status-section" class="status-section">
+
+    <!-- En cours -->
+    <div id="status-progress" class="status-card progress" style="display:none">
+      <div class="spinner"></div>
+      <div class="status-title">Generation en cours...</div>
+      <div class="status-msg" id="progress-msg">Transcription de la video, analyse IA, generation du clip...</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="timer" id="timer-display">0:00</div>
+      <br>
+      <button class="btn-cancel" onclick="abandonPolling()">Annuler le suivi</button>
+    </div>
+
+    <!-- Succes -->
+    <div id="status-success" class="status-card success" style="display:none">
+      <div class="status-icon">✓</div>
+      <div class="status-title">Votre shot est pret !</div>
+      <div class="status-msg" id="success-msg">Le clip a ete genere avec succes.</div>
+      <div class="result-actions">
+        <a id="btn-download" class="btn-result primary" href="#" target="_blank">Regarder / Telecharger</a>
+        <button class="btn-result secondary" onclick="resetForm()">Nouveau shot</button>
+      </div>
+      <p style="font-size:0.78rem;color:#666;margin-top:1rem;">Lien valide pendant 1 heure. Pensez a sauvegarder votre video.</p>
+    </div>
+
+    <!-- Erreur -->
+    <div id="status-error" class="status-card error" style="display:none">
+      <div class="status-icon">!</div>
+      <div class="status-title">Une erreur est survenue</div>
+      <div class="status-msg" id="error-msg">La generation a echoue. Verifiez votre lien et reessayez.</div>
+      <div class="result-actions">
+        <button class="btn-result secondary" onclick="resetForm()">Reessayer</button>
+      </div>
+    </div>
+
+  </div><!-- /status-section -->
+
+  <!-- Infos pratiques -->
+  <div class="info-grid">
+    <div class="info-card">
+      <h3>Duree du traitement</h3>
+      <p>Environ 3 a 8 minutes selon la longueur de la video. Vous pouvez fermer cette page — le resultat sera envoye par email.</p>
+    </div>
+    <div class="info-card">
+      <h3>Format du shot</h3>
+      <p>Clip video MP4 de 3 minutes environ, extrait du moment le plus fort selon l'analyse IA. Lien valide 1 heure.</p>
+    </div>
+    <div class="info-card">
+      <h3>Sources supportees</h3>
+      <p>YouTube (toutes categories), Google Drive (video MP4, MKV, MOV). Duree minimum recommandee : 10 minutes.</p>
+    </div>
+    <div class="info-card">
+      <h3>Confidentialite</h3>
+      <p>Votre video n'est pas stockee. Seul le clip genere est disponible temporairement via un lien prive.</p>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<footer>
+  <p>ElKurieu &mdash; <a href="index.html">Accueil</a> &mdash; <a href="form-doublage.html">Doublage video</a></p>
+</footer>
+
+<script>
+  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/shot-web';
+  const SHEET_ID    = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
+  const SHEET_NAME  = 'shot_jobs';
+  const POLL_INTERVAL = 6000;  // 6s
+  const POLL_MAX      = 900000; // 15 min max
+
+  let currentTab    = 'youtube';
+  let pollTimer     = null;
+  let elapsedTimer  = null;
+  let elapsedSec    = 0;
+  let pollingActive = false;
+
+  // ── Navigation par onglets ─────────────────────────────────────────────────
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && tab === 'youtube') || (i === 1 && tab === 'drive'));
+    });
+    document.getElementById('panel-youtube').classList.toggle('active', tab === 'youtube');
+    document.getElementById('panel-drive').classList.toggle('active', tab === 'drive');
+    hideStatus();
+  }
+
+  // ── Soumission ─────────────────────────────────────────────────────────────
+  async function submitShot(urlType) {
+    const urlInput   = document.getElementById(urlType === 'youtube' ? 'yt-url'    : 'drive-url');
+    const emailInput = document.getElementById(urlType === 'youtube' ? 'yt-email'  : 'drive-email');
+    const btn        = document.getElementById(urlType === 'youtube' ? 'yt-btn'    : 'drive-btn');
+
+    const url   = urlInput.value.trim();
+    const email = emailInput.value.trim();
+
+    if (!url) {
+      alert('Veuillez entrer une URL.');
+      urlInput.focus();
+      return;
+    }
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+      alert('Veuillez entrer un email valide.');
+      emailInput.focus();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours...';
+    hideStatus();
+
+    try {
+      const resp = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url, urlType, email})
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok || data.status === 'error') {
+        showError(data.message || 'Erreur lors de la soumission (' + resp.status + ')');
+        return;
+      }
+
+      const jobId = data.jobId;
+      if (!jobId) {
+        showError('Reponse inattendue du serveur (jobId manquant).');
+        return;
+      }
+
+      startPolling(jobId);
+
+    } catch (err) {
+      showError('Impossible de contacter le serveur. Verifiez votre connexion. (' + err.message + ')');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Generer le Shot';
+    }
+  }
+
+  // ── Polling GSheets ────────────────────────────────────────────────────────
+  function startPolling(jobId) {
+    pollingActive = true;
+    elapsedSec = 0;
+    showProgress('Transcription de la video, analyse IA, generation du clip...');
+    updateProgressBar(0);
+
+    elapsedTimer = setInterval(() => {
+      elapsedSec++;
+      document.getElementById('timer-display').textContent = formatTime(elapsedSec);
+      // Barre de progression estimee (15 min max)
+      const pct = Math.min((elapsedSec / 900) * 100, 95);
+      updateProgressBar(pct);
+      // Mise a jour du message selon la phase estimee
+      if (elapsedSec === 30)  setProgressMsg('Transcription en cours (Whisper)...');
+      if (elapsedSec === 120) setProgressMsg('Analyse IA du contenu...');
+      if (elapsedSec === 240) setProgressMsg('Generation du clip video...');
+      if (elapsedSec === 360) setProgressMsg('Upload sur Google Drive...');
+    }, 1000);
+
+    let elapsed = 0;
+    pollTimer = setInterval(async () => {
+      elapsed += POLL_INTERVAL;
+      if (!pollingActive) { clearPolling(); return; }
+      if (elapsed >= POLL_MAX) {
+        clearPolling();
+        showError('Delai depasse (15 min). Le traitement continue en arriere-plan — vous recevrez un email quand le shot sera pret.');
+        return;
+      }
+      await checkJobStatus(jobId);
+    }, POLL_INTERVAL);
+  }
+
+  async function checkJobStatus(jobId) {
+    try {
+      const tq  = encodeURIComponent("SELECT * WHERE A = '" + jobId + "'");
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&tq=${tq}`;
+      const resp = await fetch(url);
+      const text = await resp.text();
+
+      // La reponse gviz n'est pas du JSON pur
+      const jsonStr = text.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, '');
+      const gviz = JSON.parse(jsonStr);
+
+      const rows = gviz?.table?.rows;
+      if (!rows || rows.length === 0) return;
+
+      // Trouver une ligne avec status 'done' ou 'error'
+      for (const row of rows) {
+        const c = row.c;
+        if (!c) continue;
+        const status   = c[4]?.v || '';
+        const shareUrl = c[5]?.v || '';
+        const errMsg   = c[6]?.v || '';
+
+        if (status === 'done' && shareUrl) {
+          clearPolling();
+          showSuccess(shareUrl);
+          return;
+        }
+        if (status === 'error') {
+          clearPolling();
+          showError(errMsg || 'Erreur lors de la generation du shot.');
+          return;
+        }
+      }
+    } catch (e) {
+      // Erreur reseau temporaire, on continue le polling
+      console.warn('Erreur polling:', e.message);
+    }
+  }
+
+  function clearPolling() {
+    pollingActive = false;
+    if (pollTimer)    { clearInterval(pollTimer);    pollTimer    = null; }
+    if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null; }
+  }
+
+  function abandonPolling() {
+    clearPolling();
+    showError('Suivi annule. Le traitement continue en arriere-plan. Vous recevrez un email quand votre shot sera pret.');
+  }
+
+  // ── Affichage des etats ────────────────────────────────────────────────────
+  function hideStatus() {
+    document.getElementById('status-section').classList.remove('visible');
+    document.getElementById('status-progress').style.display = 'none';
+    document.getElementById('status-success').style.display  = 'none';
+    document.getElementById('status-error').style.display    = 'none';
+  }
+
+  function showProgress(msg) {
+    document.getElementById('status-section').classList.add('visible');
+    document.getElementById('status-progress').style.display = 'block';
+    document.getElementById('status-success').style.display  = 'none';
+    document.getElementById('status-error').style.display    = 'none';
+    document.getElementById('progress-msg').textContent = msg;
+    document.getElementById('timer-display').textContent = '0:00';
+    document.getElementById('status-section').scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+
+  function showSuccess(shareUrl) {
+    document.getElementById('status-section').classList.add('visible');
+    document.getElementById('status-progress').style.display = 'none';
+    document.getElementById('status-success').style.display  = 'block';
+    document.getElementById('status-error').style.display    = 'none';
+    document.getElementById('btn-download').href = shareUrl;
+    document.getElementById('success-msg').textContent =
+      'Votre shot a ete genere en ' + formatTime(elapsedSec) + '. Lien valide 1 heure.';
+    updateProgressBar(100);
+    document.getElementById('status-section').scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+
+  function showError(msg) {
+    document.getElementById('status-section').classList.add('visible');
+    document.getElementById('status-progress').style.display = 'none';
+    document.getElementById('status-success').style.display  = 'none';
+    document.getElementById('status-error').style.display    = 'block';
+    document.getElementById('error-msg').textContent = msg;
+    document.getElementById('status-section').scrollIntoView({behavior: 'smooth', block: 'start'});
+  }
+
+  function setProgressMsg(msg) {
+    document.getElementById('progress-msg').textContent = msg;
+  }
+
+  function updateProgressBar(pct) {
+    document.getElementById('progress-bar').style.width = pct + '%';
+  }
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function resetForm() {
+    clearPolling();
+    hideStatus();
+    document.getElementById('yt-url').value    = '';
+    document.getElementById('yt-email').value  = '';
+    document.getElementById('drive-url').value   = '';
+    document.getElementById('drive-email').value = '';
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+</script>
+</body>
+</html>
