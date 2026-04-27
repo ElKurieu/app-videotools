@@ -467,6 +467,15 @@
       transition: border-color 0.2s;
     }
     .ts-input:focus { border-color: var(--gold); }
+    .speed-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .speed-btn {
+      flex: 1; min-width: 48px; padding: 0.5rem 0.4rem;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text-dim); cursor: pointer;
+      font-size: 0.85rem; transition: all 0.15s;
+    }
+    .speed-btn:hover { border-color: var(--gold); color: var(--text); }
+    .speed-btn.active { border-color: var(--gold); color: var(--gold); font-weight: 700; background: rgba(212,175,55,0.1); }
     .ts-hint {
       font-size: 0.75rem;
       color: var(--text-dim);
@@ -629,6 +638,17 @@
 
       <!-- Etape 2 : email + generer (visible apres chargement) -->
       <div id="manual-submit-section">
+        <div class="field">
+          <label>Vitesse du clip</label>
+          <div class="speed-btns" id="speed-selector">
+            <button class="speed-btn" data-v="0.5"  onclick="setSpeed(this)">0.5x</button>
+            <button class="speed-btn" data-v="0.75" onclick="setSpeed(this)">0.75x</button>
+            <button class="speed-btn active" data-v="1"    onclick="setSpeed(this)">1x</button>
+            <button class="speed-btn" data-v="1.25" onclick="setSpeed(this)">1.25x</button>
+            <button class="speed-btn" data-v="1.5"  onclick="setSpeed(this)">1.5x</button>
+            <button class="speed-btn" data-v="2"    onclick="setSpeed(this)">2x</button>
+          </div>
+        </div>
         <div class="field">
           <label>Votre email</label>
           <input type="email" id="manual-email" placeholder="votre@email.com" />
@@ -885,6 +905,13 @@
   let cursorRaf       = null;
   let previewTimeout  = null;
   let manualSourceType = 'youtube'; // 'youtube' | 'drive'
+  let manualSpeed = 1.0;
+
+  function setSpeed(btn) {
+    document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    manualSpeed = parseFloat(btn.dataset.v) || 1.0;
+  }
 
   function loadYTiframeAPI() {
     if (ytAPIReady || ytAPILoading) return;
@@ -1152,7 +1179,7 @@
       const resp = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ url, email, urlType, startTime, endTime })
+        body: JSON.stringify({ url, email, urlType, startTime, endTime, speed: manualSpeed })
       });
       let data = {};
       try { data = await resp.json(); } catch(e) {}
