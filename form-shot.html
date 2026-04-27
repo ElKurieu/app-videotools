@@ -421,6 +421,59 @@
     }
     .tl-selection-info span { color: var(--gold); font-weight: 700; font-family: monospace; }
 
+    /* ── Drive preview ── */
+    #drive-player-wrap {
+      display: none;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    #drive-player-wrap iframe { width: 100%; height: 100%; border: none; }
+
+    /* ── Timestamps manuels Drive ── */
+    #drive-ts-section {
+      display: none;
+      margin-bottom: 1.5rem;
+    }
+    .ts-row {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+    .ts-field { flex: 1; }
+    .ts-field label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.4rem;
+    }
+    .ts-input {
+      width: 100%;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      font-family: monospace;
+      padding: 0.7rem 1rem;
+      outline: none;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+    .ts-input:focus { border-color: var(--gold); }
+    .ts-hint {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      margin-top: 0.75rem;
+    }
+    .ts-hint span { color: var(--gold); font-weight: 600; }
+
     /* ── Section submit manuelle ── */
     #manual-submit-section { display: none; }
   </style>
@@ -495,18 +548,41 @@
 
       <!-- Etape 1 : charger la video -->
       <div class="field">
-        <label>URL YouTube</label>
+        <label>URL YouTube ou Google Drive</label>
         <div class="input-with-btn">
-          <input type="url" id="manual-url" placeholder="https://www.youtube.com/watch?v=..."
+          <input type="url" id="manual-url"
+                 placeholder="https://www.youtube.com/watch?v=... ou https://drive.google.com/file/d/..."
                  onkeydown="if(event.key==='Enter') loadManualVideo()" />
           <button class="btn-load" id="btn-load" onclick="loadManualVideo()">Charger</button>
         </div>
-        <p class="field-hint">Colle l'URL puis clique sur Charger pour previsualiser la video</p>
+        <p class="field-hint">YouTube : timeline interactive — Google Drive : apercu + timestamps a saisir</p>
       </div>
 
-      <!-- Player YouTube (visible apres chargement) -->
+      <!-- Player YouTube (visible apres chargement YouTube) -->
       <div id="yt-player-wrap">
         <div id="yt-player"></div>
+      </div>
+
+      <!-- Player Google Drive (visible apres chargement Drive) -->
+      <div id="drive-player-wrap">
+        <iframe id="drive-iframe" allowfullscreen></iframe>
+      </div>
+
+      <!-- Timestamps manuels (pour Drive) -->
+      <div id="drive-ts-section">
+        <div class="ts-row">
+          <div class="ts-field">
+            <label>Debut</label>
+            <input class="ts-input" id="drive-start" type="text" placeholder="00:00:00"
+                   value="00:00:00" oninput="updateDriveDuration()" />
+          </div>
+          <div class="ts-field">
+            <label>Fin</label>
+            <input class="ts-input" id="drive-end" type="text" placeholder="00:03:00"
+                   value="00:03:00" oninput="updateDriveDuration()" />
+          </div>
+        </div>
+        <p class="ts-hint">Format HH:MM:SS &nbsp;·&nbsp; Duree selection : <span id="drive-dur-lbl">3:00</span></p>
       </div>
 
       <!-- Timeline de selection (visible apres chargement) -->
@@ -613,7 +689,7 @@
     </div>
     <div class="info-card">
       <h3>Sources supportees</h3>
-      <p>IA : YouTube + Google Drive. Manuel : YouTube uniquement. Duree minimum recommandee : 10 minutes.</p>
+      <p>IA : YouTube + Google Drive. Manuel : YouTube + Google Drive. Duree minimum recommandee : 10 minutes.</p>
     </div>
     <div class="info-card">
       <h3>Confidentialite</h3>
@@ -797,7 +873,7 @@
   }
 
   // ════════════════════════════════════════════════════════════════════════════
-  // ── COUPE MANUELLE — YouTube IFrame + Timeline ────────────────────────────
+  // ── COUPE MANUELLE — YouTube IFrame + Timeline + Google Drive ────────────
   // ════════════════════════════════════════════════════════════════════════════
   let ytPlayer        = null;
   let ytAPIReady      = false;
@@ -805,9 +881,10 @@
   let ytDuration      = 0;
   let manualStart     = 0;
   let manualEnd       = 0;
-  let isDragging      = null;   // 'start' | 'end'
+  let isDragging      = null;
   let cursorRaf       = null;
   let previewTimeout  = null;
+  let manualSourceType = 'youtube'; // 'youtube' | 'drive'
 
   function loadYTiframeAPI() {
     if (ytAPIReady || ytAPILoading) return;
@@ -832,10 +909,61 @@
     return null;
   }
 
+  function extractDriveFileId(url) {
+    const m = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    return m ? m[1] : null;
+  }
+
   function loadManualVideo() {
     const url = document.getElementById('manual-url').value.trim();
-    const videoId = extractVideoId(url);
-    if (!videoId) { alert('URL YouTube invalide. Ex: https://www.youtube.com/watch?v=XXX'); return; }
+    if (!url) { alert('Veuillez entrer une URL.'); return; }
+
+    const driveFileId = extractDriveFileId(url);
+    const ytVideoId   = extractVideoId(url);
+
+    if (driveFileId) {
+      loadDrivePreview(driveFileId);
+    } else if (ytVideoId) {
+      loadYouTubePreview(ytVideoId);
+    } else {
+      alert('URL non reconnue. Utilisez une URL YouTube ou Google Drive.');
+    }
+  }
+
+  // ── Chargement Google Drive ───────────────────────────────────────────────
+  function loadDrivePreview(fileId) {
+    manualSourceType = 'drive';
+    document.getElementById('yt-player-wrap').style.display    = 'none';
+    document.getElementById('timeline-section').style.display  = 'none';
+
+    const iframe = document.getElementById('drive-iframe');
+    iframe.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+    document.getElementById('drive-player-wrap').style.display    = 'block';
+    document.getElementById('drive-ts-section').style.display     = 'block';
+    document.getElementById('manual-submit-section').style.display = 'block';
+    updateDriveDuration();
+  }
+
+  function tsToSec(ts) {
+    const parts = ts.trim().split(':').map(Number);
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    return 0;
+  }
+
+  function updateDriveDuration() {
+    const s = tsToSec(document.getElementById('drive-start').value);
+    const e = tsToSec(document.getElementById('drive-end').value);
+    const d = Math.max(0, e - s);
+    document.getElementById('drive-dur-lbl').textContent = formatTime(d);
+  }
+
+  // ── Chargement YouTube ────────────────────────────────────────────────────
+  function loadYouTubePreview(videoId) {
+    manualSourceType = 'youtube';
+    document.getElementById('drive-player-wrap').style.display = 'none';
+    document.getElementById('drive-ts-section').style.display  = 'none';
+
     const btn = document.getElementById('btn-load');
     btn.disabled = true;
     btn.textContent = 'Chargement...';
@@ -850,19 +978,15 @@
           videoId: videoId,
           playerVars: { controls: 1, rel: 0, modestbranding: 1 },
           events: {
-            onReady: function(e) {
-              e.target.pauseVideo();
-              onPlayerReady(videoId);
-            },
+            onReady: function(e) { e.target.pauseVideo(); onPlayerReady(videoId); },
             onStateChange: onPlayerStateChange
           }
         });
       }
     }
 
-    if (ytAPIReady) {
-      doLoad();
-    } else {
+    if (ytAPIReady) { doLoad(); }
+    else {
       loadYTiframeAPI();
       const wait = setInterval(function() {
         if (ytAPIReady) { clearInterval(wait); doLoad(); }
@@ -994,7 +1118,22 @@
     const email = document.getElementById('manual-email').value.trim();
     if (!url) { alert('Veuillez charger une video.'); return; }
     if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) { alert('Email invalide.'); return; }
-    if (manualEnd <= manualStart) { alert('La selection est invalide.'); return; }
+
+    let startTime, endTime, urlType;
+
+    if (manualSourceType === 'drive') {
+      const s = tsToSec(document.getElementById('drive-start').value);
+      const e = tsToSec(document.getElementById('drive-end').value);
+      if (e <= s) { alert('La fin doit etre apres le debut.'); return; }
+      startTime = s;
+      endTime   = e;
+      urlType   = 'drive-manual';
+    } else {
+      if (manualEnd <= manualStart) { alert('La selection est invalide.'); return; }
+      startTime = Math.round(manualStart);
+      endTime   = Math.round(manualEnd);
+      urlType   = 'youtube-manual';
+    }
 
     const btn = document.getElementById('manual-btn');
     btn.disabled = true;
@@ -1005,12 +1144,7 @@
       const resp = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          url, email,
-          urlType:   'youtube-manual',
-          startTime: Math.round(manualStart),
-          endTime:   Math.round(manualEnd)
-        })
+        body: JSON.stringify({ url, email, urlType, startTime, endTime })
       });
       let data = {};
       try { data = await resp.json(); } catch(e) {}
