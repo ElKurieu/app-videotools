@@ -788,7 +788,7 @@
     pollingActive = true;
     elapsedSec = 0;
     const initMsg = isManual
-      ? 'Decoupage de la video en cours...'
+      ? 'Generation en cours...'
       : 'Transcription de la video, analyse IA, generation du clip...';
     showProgress(initMsg);
     updateProgressBar(0);
@@ -800,7 +800,6 @@
       if (!isManual && elapsedSec === 30)  setProgressMsg('Transcription en cours (Whisper)...');
       if (!isManual && elapsedSec === 120) setProgressMsg('Analyse IA du contenu...');
       if (!isManual && elapsedSec === 240) setProgressMsg('Generation du clip video...');
-      if (isManual  && elapsedSec === 30)  setProgressMsg('FFmpeg : decoupage + encodage...');
       if (elapsedSec === 360) setProgressMsg('Upload sur Google Drive...');
     }, 1000);
     let elapsed = 0;
