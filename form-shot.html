@@ -468,6 +468,15 @@
     }
     .ts-input:focus { border-color: var(--gold); }
     .speed-btns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .format-btns { display: flex; gap: 0.5rem; }
+    .format-btn {
+      flex: 1; padding: 0.5rem 0.8rem;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text-dim); font-size: 0.85rem;
+      cursor: pointer; transition: all 0.2s; font-weight: 600;
+    }
+    .format-btn:hover { border-color: var(--gold); color: var(--text); }
+    .format-btn.active { border-color: var(--gold); color: var(--gold); font-weight: 700; background: rgba(212,175,55,0.1); }
     .speed-btn {
       flex: 1; min-width: 48px; padding: 0.5rem 0.4rem;
       background: var(--card2); border: 1px solid var(--border);
@@ -526,6 +535,13 @@
         <input type="email" id="yt-email" placeholder="votre@email.com" />
         <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
       </div>
+      <div class="field">
+        <label>Format de sortie</label>
+        <div class="format-btns">
+          <button class="format-btn active" data-fmt="16:9" onclick="setFormat(this)">Video 16:9</button>
+          <button class="format-btn" data-fmt="9:16" onclick="setFormat(this)">Short 9:16</button>
+        </div>
+      </div>
       <button class="btn-primary" id="yt-btn" onclick="submitShot('youtube')">
         Generer le Shot (IA)
       </button>
@@ -544,6 +560,13 @@
         <label>Votre email</label>
         <input type="email" id="drive-email" placeholder="votre@email.com" />
         <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
+      </div>
+      <div class="field">
+        <label>Format de sortie</label>
+        <div class="format-btns">
+          <button class="format-btn active" data-fmt="16:9" onclick="setFormat(this)">Video 16:9</button>
+          <button class="format-btn" data-fmt="9:16" onclick="setFormat(this)">Short 9:16</button>
+        </div>
       </div>
       <button class="btn-primary" id="drive-btn" onclick="submitShot('drive')">
         Generer le Shot (IA)
@@ -653,6 +676,13 @@
           <label>Votre email</label>
           <input type="email" id="manual-email" placeholder="votre@email.com" />
           <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
+        </div>
+        <div class="field">
+          <label>Format de sortie</label>
+          <div class="format-btns">
+            <button class="format-btn active" data-fmt="16:9" onclick="setFormat(this)">Video 16:9</button>
+            <button class="format-btn" data-fmt="9:16" onclick="setFormat(this)">Short 9:16</button>
+          </div>
         </div>
         <button class="btn-primary" id="manual-btn" onclick="submitManual()">
           ✂ Generer le clip
@@ -768,7 +798,7 @@
     try {
       const resp = await fetch(WEBHOOK_URL, {
         method: 'POST', headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({url, urlType, email})
+        body: JSON.stringify({url, urlType, email, format: shotFormat})
       });
       let data = {};
       try { data = await resp.json(); } catch(e) {}
@@ -909,6 +939,13 @@
   let previewTimeout  = null;
   let manualSourceType = 'youtube'; // 'youtube' | 'drive'
   let manualSpeed = 1.0;
+  let shotFormat = '16:9';
+
+  function setFormat(btn) {
+    document.querySelectorAll('.format-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    shotFormat = btn.dataset.fmt;
+  }
 
   function setSpeed(btn) {
     document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
@@ -1182,7 +1219,7 @@
       const resp = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ url, email, urlType, startTime, endTime, speed: manualSpeed })
+        body: JSON.stringify({ url, email, urlType, startTime, endTime, speed: manualSpeed, format: shotFormat })
       });
       let data = {};
       try { data = await resp.json(); } catch(e) {}
