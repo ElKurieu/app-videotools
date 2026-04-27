@@ -494,6 +494,49 @@
 
     /* ── Section submit manuelle ── */
     #manual-submit-section { display: none; }
+
+    /* ── Source toggle (URL / PC) ── */
+    .source-btns { display: flex; gap: 0.5rem; }
+    .source-btn {
+      flex: 1; padding: 0.5rem 0.8rem;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 6px; color: var(--text-dim); font-size: 0.85rem;
+      cursor: pointer; transition: all 0.2s; font-weight: 600;
+    }
+    .source-btn:hover { border-color: var(--gold); color: var(--text); }
+    .source-btn.active { border-color: var(--gold); color: var(--gold); font-weight: 700; background: rgba(212,175,55,0.1); }
+
+    /* ── Drop zone PC ── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 2rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--gold);
+      background: rgba(212,175,55,0.05);
+    }
+    .drop-zone .drop-icon { font-size: 2.5rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+    .drop-zone p { margin: 0.2rem 0; }
+    .drop-zone .drop-hint { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.4rem; }
+    #pc-video-preview {
+      display: none;
+      margin-top: 1rem;
+    }
+    #pc-video {
+      width: 100%; border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #000;
+    }
+    .pc-sel-info {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+    .pc-sel-info span { color: var(--gold); font-weight: 700; font-family: monospace; }
   </style>
 </head>
 <body>
@@ -578,6 +621,18 @@
   <div id="panel-manual" class="tab-panel">
     <div class="form-card">
 
+      <!-- Toggle source -->
+      <div class="field">
+        <label>Source</label>
+        <div class="source-btns">
+          <button class="source-btn active" data-src="url" onclick="setManualSource('url')">URL YouTube / Drive</button>
+          <button class="source-btn" data-src="pc" onclick="setManualSource('pc')">Fichier depuis le PC</button>
+        </div>
+      </div>
+
+      <!-- Section URL (YouTube ou Drive) -->
+      <div id="url-source-section">
+
       <!-- Etape 1 : charger la video -->
       <div class="field">
         <label>URL YouTube ou Google Drive</label>
@@ -659,6 +714,42 @@
 
       </div><!-- /timeline-section -->
 
+      </div><!-- /url-source-section -->
+
+      <!-- Section fichier depuis PC -->
+      <div id="pc-source-section" style="display:none">
+        <div class="field">
+          <label>Selectionner ou glisser une video</label>
+          <div class="drop-zone" id="drop-zone" onclick="document.getElementById('pc-file-input').click()">
+            <input type="file" id="pc-file-input" accept="video/*" style="display:none" onchange="loadPCFile(this.files[0])">
+            <div class="drop-icon">&#9654;</div>
+            <p>Cliquez ou glissez votre video ici</p>
+            <p class="drop-hint">MP4, MOV, MKV, AVI acceptes</p>
+          </div>
+        </div>
+        <div id="pc-video-preview">
+          <video id="pc-video" controls preload="metadata"></video>
+          <div class="tl-controls" style="margin-top:0.75rem">
+            <button class="btn-tl" onclick="setPCStart()">&#9664;&#9654; Marquer debut</button>
+            <button class="btn-tl" onclick="setPCEnd()">&#9664;&#9654; Marquer fin</button>
+            <span class="pc-sel-info">
+              <span id="pc-start-lbl">0:00</span> &#8594; <span id="pc-end-lbl">0:00</span>
+              &nbsp;&#183;&nbsp; duree : <span id="pc-dur-lbl">0:00</span>
+            </span>
+          </div>
+          <div class="ts-row" style="margin-top:0.75rem">
+            <div class="ts-field">
+              <label>Debut (sec)</label>
+              <input class="ts-input" id="pc-start-input" type="number" min="0" step="0.1" value="0" oninput="updatePCDuration()">
+            </div>
+            <div class="ts-field">
+              <label>Fin (sec)</label>
+              <input class="ts-input" id="pc-end-input" type="number" min="0" step="0.1" value="30" oninput="updatePCDuration()">
+            </div>
+          </div>
+        </div>
+      </div><!-- /pc-source-section -->
+
       <!-- Etape 2 : email + generer (visible apres chargement) -->
       <div id="manual-submit-section">
         <div class="field">
@@ -677,8 +768,8 @@
           <input type="email" id="manual-email" placeholder="votre@email.com" />
           <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
         </div>
-        <button class="btn-primary" id="manual-btn" onclick="submitManual()">
-          ✂ Generer le clip
+        <button class="btn-primary" id="manual-btn" onclick="submitManualOrPC()">
+          Generer le clip
         </button>
       </div>
 
@@ -923,6 +1014,12 @@
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
+    // Reset etat PC
+    pcFile = null;
+    const pcInput = document.getElementById('pc-file-input');
+    if (pcInput) pcInput.value = '';
+    const pcPreview = document.getElementById('pc-video-preview');
+    if (pcPreview) { pcPreview.style.display = 'none'; const v = document.getElementById('pc-video'); if (v) { v.src = ''; } }
     window.scrollTo({top: 0, behavior: 'smooth'});
   }
 
@@ -1186,6 +1283,115 @@
       if (ytPlayer) ytPlayer.pauseVideo();
       previewTimeout = null;
     }, (manualEnd - manualStart) * 1000);
+  }
+
+  // ── Toggle source URL / PC ───────────────────────────────────────────────
+  let pcFile = null;
+
+  function setManualSource(src) {
+    document.querySelectorAll('.source-btn').forEach(b => b.classList.toggle('active', b.dataset.src === src));
+    if (src === 'url') {
+      document.getElementById('url-source-section').style.display = 'block';
+      document.getElementById('pc-source-section').style.display = 'none';
+      if (manualSourceType === 'pc') {
+        manualSourceType = 'youtube';
+        document.getElementById('manual-submit-section').style.display = 'none';
+      }
+    } else {
+      document.getElementById('url-source-section').style.display = 'none';
+      document.getElementById('pc-source-section').style.display = 'block';
+      manualSourceType = 'pc';
+      if (pcFile) document.getElementById('manual-submit-section').style.display = 'block';
+    }
+  }
+
+  function loadPCFile(file) {
+    if (!file || !file.type.startsWith('video/')) { alert('Veuillez selectionner un fichier video valide.'); return; }
+    pcFile = file;
+    const videoEl = document.getElementById('pc-video');
+    videoEl.src = URL.createObjectURL(file);
+    videoEl.onloadedmetadata = function() {
+      const dur = videoEl.duration || 60;
+      document.getElementById('pc-end-input').value = Math.round(Math.min(30, dur));
+      updatePCDuration();
+    };
+    document.getElementById('pc-video-preview').style.display = 'block';
+    document.getElementById('manual-submit-section').style.display = 'block';
+  }
+
+  function setPCStart() {
+    const t = document.getElementById('pc-video').currentTime || 0;
+    document.getElementById('pc-start-input').value = t.toFixed(1);
+    updatePCDuration();
+  }
+
+  function setPCEnd() {
+    const t = document.getElementById('pc-video').currentTime || 0;
+    document.getElementById('pc-end-input').value = t.toFixed(1);
+    updatePCDuration();
+  }
+
+  function updatePCDuration() {
+    const s = parseFloat(document.getElementById('pc-start-input').value) || 0;
+    const e = parseFloat(document.getElementById('pc-end-input').value) || 0;
+    const d = Math.max(0, e - s);
+    document.getElementById('pc-start-lbl').textContent = formatTime(s);
+    document.getElementById('pc-end-lbl').textContent   = formatTime(e);
+    document.getElementById('pc-dur-lbl').textContent   = formatTime(d);
+  }
+
+  // Drag & drop sur la drop zone
+  document.addEventListener('DOMContentLoaded', function() {
+    const dz = document.getElementById('drop-zone');
+    if (!dz) return;
+    dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+    dz.addEventListener('drop', function(e) {
+      e.preventDefault(); dz.classList.remove('dragover');
+      const f = e.dataTransfer.files[0];
+      if (f) loadPCFile(f);
+    });
+  });
+
+  function submitManualOrPC() {
+    if (manualSourceType === 'pc') {
+      submitPCUpload();
+    } else {
+      submitManual();
+    }
+  }
+
+  async function submitPCUpload() {
+    if (!pcFile) { alert('Veuillez selectionner un fichier video.'); return; }
+    const email = document.getElementById('manual-email').value.trim();
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) { alert('Email invalide.'); return; }
+    const startTime = parseFloat(document.getElementById('pc-start-input').value) || 0;
+    const endTime   = parseFloat(document.getElementById('pc-end-input').value)   || 30;
+    if (endTime <= startTime) { alert('La fin doit etre apres le debut.'); return; }
+    const btn = document.getElementById('manual-btn');
+    btn.disabled = true; btn.textContent = 'Upload en cours...';
+    hideStatus();
+    const fd = new FormData();
+    fd.append('video', pcFile);
+    fd.append('urlType', 'pc-upload');
+    fd.append('url', 'pc-upload');
+    fd.append('email', email);
+    fd.append('format', shotFormat);
+    fd.append('startTime', String(startTime));
+    fd.append('endTime', String(endTime));
+    fd.append('speed', String(manualSpeed));
+    try {
+      const resp = await fetch(WEBHOOK_URL, { method: 'POST', body: fd });
+      let data = {};
+      try { data = await resp.json(); } catch(e) {}
+      if (!resp.ok || data.status === 'error') { showError(data.message || 'Erreur serveur (' + resp.status + ').'); return; }
+      if (!data.jobId) { showError('Reponse inattendue (jobId manquant).'); return; }
+      startPolling(data.jobId, true);
+    } catch (err) {
+      showError('Impossible de contacter le serveur. (' + err.message + ')');
+    } finally {
+      btn.disabled = false; btn.textContent = '✂ Generer le clip';
+    }
   }
 
   // Soumission mode manuel
