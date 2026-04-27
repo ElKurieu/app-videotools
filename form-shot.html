@@ -574,12 +574,12 @@
           <div class="ts-field">
             <label>Debut</label>
             <input class="ts-input" id="drive-start" type="text" placeholder="00:00:00"
-                   value="00:00:00" oninput="updateDriveDuration()" />
+                   value="00:00:00" oninput="updateDriveDuration()" onblur="formatTsInput(this)" />
           </div>
           <div class="ts-field">
             <label>Fin</label>
             <input class="ts-input" id="drive-end" type="text" placeholder="00:03:00"
-                   value="00:03:00" oninput="updateDriveDuration()" />
+                   value="00:03:00" oninput="updateDriveDuration()" onblur="formatTsInput(this)" />
           </div>
         </div>
         <p class="ts-hint">Format HH:MM:SS &nbsp;·&nbsp; Duree selection : <span id="drive-dur-lbl">3:00</span></p>
@@ -945,10 +945,18 @@
   }
 
   function tsToSec(ts) {
-    const parts = ts.trim().split(':').map(Number);
+    // Accepte : ou . comme separateurs (ex: 00:01:30 ou 00.01.30)
+    const parts = ts.trim().replace(/\./g, ':').split(':').map(v => parseFloat(v) || 0);
     if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
     if (parts.length === 2) return parts[0]*60 + parts[1];
     return 0;
+  }
+
+  function formatTsInput(input) {
+    let digits = input.value.replace(/\D/g, '').slice(0, 6);
+    while (digits.length < 6) digits = '0' + digits;
+    input.value = digits.slice(0,2) + ':' + digits.slice(2,4) + ':' + digits.slice(4,6);
+    updateDriveDuration();
   }
 
   function updateDriveDuration() {
