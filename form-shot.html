@@ -668,7 +668,7 @@
     <div id="status-progress" class="status-card progress" style="display:none">
       <div class="spinner"></div>
       <div class="status-title">Generation en cours...</div>
-      <div class="status-msg" id="progress-msg">Transcription de la video, analyse IA, generation du clip...</div>
+      <div class="status-msg" id="progress-msg">Traitement en cours...</div>
       <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
       <div class="timer" id="timer-display">0:00</div>
       <br>
@@ -784,19 +784,23 @@
   }
 
   // ── Polling ───────────────────────────────────────────────────────────────
-  function startPolling(jobId) {
+  function startPolling(jobId, isManual) {
     pollingActive = true;
     elapsedSec = 0;
-    showProgress('Transcription de la video, analyse IA, generation du clip...');
+    const initMsg = isManual
+      ? 'Decoupage de la video en cours...'
+      : 'Transcription de la video, analyse IA, generation du clip...';
+    showProgress(initMsg);
     updateProgressBar(0);
     elapsedTimer = setInterval(() => {
       elapsedSec++;
       document.getElementById('timer-display').textContent = formatTime(elapsedSec);
-      const pct = Math.min((elapsedSec / 900) * 100, 95);
+      const pct = Math.min((elapsedSec / (isManual ? 180 : 900)) * 100, 95);
       updateProgressBar(pct);
-      if (elapsedSec === 30)  setProgressMsg('Transcription en cours (Whisper)...');
-      if (elapsedSec === 120) setProgressMsg('Analyse IA du contenu...');
-      if (elapsedSec === 240) setProgressMsg('Generation du clip video...');
+      if (!isManual && elapsedSec === 30)  setProgressMsg('Transcription en cours (Whisper)...');
+      if (!isManual && elapsedSec === 120) setProgressMsg('Analyse IA du contenu...');
+      if (!isManual && elapsedSec === 240) setProgressMsg('Generation du clip video...');
+      if (isManual  && elapsedSec === 30)  setProgressMsg('FFmpeg : decoupage + encodage...');
       if (elapsedSec === 360) setProgressMsg('Upload sur Google Drive...');
     }, 1000);
     let elapsed = 0;
@@ -1185,7 +1189,7 @@
       try { data = await resp.json(); } catch(e) {}
       if (!resp.ok || data.status === 'error') { showError(data.message || 'Erreur serveur.'); return; }
       if (!data.jobId) { showError('Reponse inattendue (jobId manquant).'); return; }
-      startPolling(data.jobId);
+      startPolling(data.jobId, true);
     } catch (err) {
       showError('Impossible de contacter le serveur. (' + err.message + ')');
     } finally {
