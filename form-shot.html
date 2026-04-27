@@ -677,16 +677,17 @@
           <input type="email" id="manual-email" placeholder="votre@email.com" />
           <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
         </div>
-        <div class="field">
-          <label>Format de sortie</label>
-          <div class="format-btns">
-            <button class="format-btn active" data-fmt="16:9" onclick="setFormat(this)">Video 16:9</button>
-            <button class="format-btn" data-fmt="9:16" onclick="setFormat(this)">Short 9:16</button>
-          </div>
-        </div>
         <button class="btn-primary" id="manual-btn" onclick="submitManual()">
           ✂ Generer le clip
         </button>
+      </div>
+
+      <div class="field" style="margin-top:1.4rem">
+        <label>Format de sortie</label>
+        <div class="format-btns">
+          <button class="format-btn active" data-fmt="16:9" onclick="setFormat(this)">Video 16:9</button>
+          <button class="format-btn" data-fmt="9:16" onclick="setFormat(this)">Short 9:16</button>
+        </div>
       </div>
 
     </div>
