@@ -26,7 +26,7 @@
       min-height: 100vh;
     }
 
-    /* Nav */
+    /* ── Navigation ── */
     nav {
       background: rgba(10,10,10,0.95);
       border-bottom: 1px solid var(--border);
@@ -44,12 +44,13 @@
     .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
     .nav-links a:hover { color: var(--gold); }
 
-    /* Hero */
+    /* ── Hero ── */
     .hero { max-width: 680px; margin: 3rem auto 2rem; padding: 0 1.5rem; text-align: center; }
     .hero h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.6rem; }
     .hero h1 span { color: var(--gold); }
     .hero p { color: var(--text-dim); font-size: 1rem; line-height: 1.6; }
 
+    /* ── Badge ── */
     .badge {
       display: inline-block;
       background: rgba(212,175,55,0.12);
@@ -64,9 +65,10 @@
       margin-bottom: 1rem;
     }
 
+    /* ── Conteneur principal ── */
     .container { max-width: 680px; margin: 0 auto 4rem; padding: 0 1.5rem; }
 
-    /* Tabs */
+    /* ── Tabs ── */
     .tabs {
       display: flex;
       background: var(--card);
@@ -90,10 +92,11 @@
     .tab-btn.active { color: var(--gold); background: var(--card2); border-bottom-color: var(--gold); }
     .tab-btn:hover:not(.active) { color: var(--text); background: #151515; }
 
-    /* Panels */
+    /* ── Panels ── */
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
+    /* ── Card de formulaire ── */
     .form-card {
       background: var(--card);
       border: 1px solid var(--border);
@@ -101,7 +104,7 @@
       padding: 2rem;
     }
 
-    /* Champs */
+    /* ── Champs ── */
     .field { margin-bottom: 1.4rem; }
     .field label {
       display: block;
@@ -129,10 +132,7 @@
     .field input::placeholder { color: #555; }
     .field-hint { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.4rem; }
 
-    .fields-row { display: flex; gap: 1rem; }
-    .fields-row .field { flex: 1; }
-
-    /* Bouton principal */
+    /* ── Bouton principal ── */
     .btn-primary {
       width: 100%;
       padding: 1rem;
@@ -150,7 +150,7 @@
     .btn-primary:active { transform: translateY(0); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-    /* Statut */
+    /* ── Section statut ── */
     .status-section { display: none; margin-top: 1.5rem; }
     .status-section.visible { display: block; }
     .status-card { border-radius: var(--radius); padding: 1.5rem; border: 1px solid var(--border); }
@@ -176,25 +176,44 @@
 
     .result-actions { display: flex; gap: 0.75rem; margin-top: 1.2rem; flex-wrap: wrap; }
     .btn-result {
-      flex: 1; min-width: 140px; padding: 0.75rem 1rem; border-radius: 8px;
-      font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: none;
-      text-align: center; transition: opacity 0.2s;
+      flex: 1;
+      min-width: 140px;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: opacity 0.2s;
     }
     .btn-result.primary { background: var(--gold); color: #000; border: none; }
     .btn-result.secondary { background: none; color: var(--gold); border: 1px solid var(--gold); }
     .btn-result:hover { opacity: 0.85; }
 
     .btn-cancel {
-      background: none; border: 1px solid #444; color: var(--text-dim); border-radius: 6px;
-      padding: 6px 14px; font-size: 0.8rem; cursor: pointer; margin-top: 0.75rem;
+      background: none;
+      border: 1px solid #444;
+      color: var(--text-dim);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 0.75rem;
       transition: border-color 0.2s, color 0.2s;
     }
     .btn-cancel:hover { border-color: #777; color: var(--text); }
 
     .progress-bar-wrap { background: #222; border-radius: 4px; height: 4px; margin-top: 1rem; overflow: hidden; }
-    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); width: 0%; transition: width 1s linear; border-radius: 4px; }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      width: 0%;
+      transition: width 1s linear;
+      border-radius: 4px;
+    }
 
-    /* Info grid */
+    /* ── Infos bas de page ── */
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; }
     .info-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
     .info-card h3 { font-size: 0.85rem; color: var(--gold); margin-bottom: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -202,6 +221,208 @@
 
     footer { text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 2rem; }
     footer a { color: var(--gold); text-decoration: none; }
+
+    /* ── Coupe Manuelle — bouton Charger ── */
+    .input-with-btn { display: flex; gap: 0.5rem; }
+    .input-with-btn input { flex: 1; }
+    .btn-load {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.75rem 1.2rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-load:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-load:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── Player YouTube ── */
+    #yt-player-wrap {
+      display: none;
+      margin-bottom: 1.5rem;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    #yt-player { width: 100%; height: 100%; }
+
+    /* ── Timeline ── */
+    #timeline-section { display: none; margin-bottom: 1.5rem; }
+
+    .tl-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 0.82rem;
+    }
+    .tl-time {
+      font-family: monospace;
+      font-weight: 700;
+      font-size: 0.88rem;
+      color: var(--gold);
+    }
+    .tl-duration-label {
+      color: var(--text-dim);
+      font-size: 0.78rem;
+    }
+    .tl-duration-label strong { color: var(--text); }
+
+    .tl-outer {
+      position: relative;
+      height: 80px;
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: crosshair;
+      user-select: none;
+      border: 1px solid #333;
+    }
+
+    /* Filmstrip body */
+    .tl-filmstrip {
+      position: absolute;
+      inset: 0;
+      background-color: #1a1a2e;
+    }
+    /* Perforation holes top & bottom */
+    .tl-filmstrip::before,
+    .tl-filmstrip::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 12px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent 0, transparent 6px,
+        rgba(0,0,0,0.85) 6px, rgba(0,0,0,0.85) 8px,
+        transparent 8px, transparent 18px,
+        #0a0a0a 18px, #0a0a0a 26px,
+        transparent 26px, transparent 28px
+      );
+      z-index: 3;
+    }
+    .tl-filmstrip::before { top: 0; }
+    .tl-filmstrip::after  { bottom: 0; }
+
+    /* Thumbnail zone */
+    .tl-thumbs {
+      position: absolute;
+      inset: 12px 0;
+      background-size: auto 100%;
+      background-repeat: repeat-x;
+      background-position: left center;
+      opacity: 0.75;
+      z-index: 1;
+    }
+
+    /* Selection zone */
+    .tl-selection {
+      position: absolute;
+      top: 0; bottom: 0;
+      background: rgba(212,175,55,0.18);
+      border-top: 2px solid var(--gold);
+      border-bottom: 2px solid var(--gold);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Playhead cursor */
+    .tl-cursor {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: #fff;
+      box-shadow: 0 0 4px rgba(255,255,255,0.6);
+      pointer-events: none;
+      z-index: 5;
+      transform: translateX(-1px);
+    }
+    .tl-cursor::after {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 7px solid #fff;
+    }
+
+    /* Handles */
+    .tl-handle {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 20px;
+      transform: translateX(-10px);
+      cursor: ew-resize;
+      z-index: 10;
+    }
+    .tl-handle-bar {
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 50%;
+      width: 4px;
+      transform: translateX(-50%);
+      background: var(--gold);
+      border-radius: 2px;
+    }
+    .tl-handle-grip {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--gold);
+      color: #000;
+      width: 18px;
+      height: 26px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: -1px;
+      box-shadow: 0 0 6px rgba(212,175,55,0.5);
+    }
+
+    /* Timeline controls */
+    .tl-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn-tl {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 6px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-tl:hover { border-color: var(--gold); color: var(--gold); }
+    .btn-tl.btn-play { color: var(--text); border-color: #444; font-weight: 600; }
+    .tl-selection-info {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: var(--text-dim);
+    }
+    .tl-selection-info span { color: var(--gold); font-weight: 700; font-family: monospace; }
+
+    /* ── Section submit manuelle ── */
+    #manual-submit-section { display: none; }
   </style>
 </head>
 <body>
@@ -225,12 +446,12 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('youtube')">YouTube (IA)</button>
-    <button class="tab-btn" onclick="switchTab('drive')">Google Drive (IA)</button>
-    <button class="tab-btn" onclick="switchTab('manual')">Coupe Manuelle</button>
+    <button class="tab-btn active"  onclick="switchTab('youtube')">YouTube (IA)</button>
+    <button class="tab-btn"         onclick="switchTab('drive')">Google Drive (IA)</button>
+    <button class="tab-btn"         onclick="switchTab('manual')">Coupe Manuelle</button>
   </div>
 
-  <!-- Tab YouTube -->
+  <!-- Tab YouTube IA -->
   <div id="panel-youtube" class="tab-panel active">
     <div class="form-card">
       <div class="field">
@@ -249,7 +470,7 @@
     </div>
   </div>
 
-  <!-- Tab Google Drive -->
+  <!-- Tab Google Drive IA -->
   <div id="panel-drive" class="tab-panel">
     <div class="form-card">
       <div class="field">
@@ -268,38 +489,84 @@
     </div>
   </div>
 
-  <!-- Tab Manuel -->
+  <!-- Tab Coupe Manuelle -->
   <div id="panel-manual" class="tab-panel">
     <div class="form-card">
+
+      <!-- Etape 1 : charger la video -->
       <div class="field">
         <label>URL YouTube</label>
-        <input type="url" id="manual-url" placeholder="https://www.youtube.com/watch?v=..." />
-        <p class="field-hint">Collez le lien de la video YouTube a decouper</p>
-      </div>
-      <div class="fields-row">
-        <div class="field">
-          <label>Debut</label>
-          <input type="text" id="manual-start" placeholder="1:23" maxlength="8" />
-          <p class="field-hint">Format MM:SS ou HH:MM:SS</p>
+        <div class="input-with-btn">
+          <input type="url" id="manual-url" placeholder="https://www.youtube.com/watch?v=..."
+                 onkeydown="if(event.key==='Enter') loadManualVideo()" />
+          <button class="btn-load" id="btn-load" onclick="loadManualVideo()">Charger</button>
         </div>
-        <div class="field">
-          <label>Fin</label>
-          <input type="text" id="manual-end" placeholder="4:56" maxlength="8" />
-          <p class="field-hint">Format MM:SS ou HH:MM:SS</p>
+        <p class="field-hint">Colle l'URL puis clique sur Charger pour previsualiser la video</p>
+      </div>
+
+      <!-- Player YouTube (visible apres chargement) -->
+      <div id="yt-player-wrap">
+        <div id="yt-player"></div>
+      </div>
+
+      <!-- Timeline de selection (visible apres chargement) -->
+      <div id="timeline-section">
+
+        <div class="tl-header">
+          <span class="tl-time" id="tl-start-lbl">00:00</span>
+          <span class="tl-duration-label">Selection : <strong id="tl-dur-lbl">0:00</strong></span>
+          <span class="tl-time" id="tl-end-lbl">00:00</span>
         </div>
+
+        <!-- Pellicule interactive -->
+        <div class="tl-outer" id="tl-outer">
+          <div class="tl-filmstrip" id="tl-filmstrip">
+            <div class="tl-thumbs" id="tl-thumbs"></div>
+          </div>
+          <div class="tl-selection"  id="tl-selection"></div>
+          <div class="tl-cursor"     id="tl-cursor" style="left:0"></div>
+          <!-- Handle debut -->
+          <div class="tl-handle" id="hdl-start">
+            <div class="tl-handle-bar"></div>
+            <div class="tl-handle-grip">&#9664;&#9654;</div>
+          </div>
+          <!-- Handle fin -->
+          <div class="tl-handle" id="hdl-end">
+            <div class="tl-handle-bar"></div>
+            <div class="tl-handle-grip">&#9664;&#9654;</div>
+          </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="tl-controls">
+          <button class="btn-tl" onclick="seekTo(manualStart)" title="Aller au debut de la selection">⏮</button>
+          <button class="btn-tl btn-play" id="btn-play-pause" onclick="togglePlay()">▶ Lire</button>
+          <button class="btn-tl" onclick="previewSelection()" title="Ecouter la selection">✂ Apercu</button>
+          <button class="btn-tl" onclick="seekTo(manualEnd - 3)" title="Aller a la fin de la selection">⏭</button>
+          <span class="tl-selection-info">
+            <span id="tl-start-val">0:00</span> → <span id="tl-end-val">0:00</span>
+            &nbsp;·&nbsp; duree : <span id="tl-dur-val">0:00</span>
+          </span>
+        </div>
+
+      </div><!-- /timeline-section -->
+
+      <!-- Etape 2 : email + generer (visible apres chargement) -->
+      <div id="manual-submit-section">
+        <div class="field">
+          <label>Votre email</label>
+          <input type="email" id="manual-email" placeholder="votre@email.com" />
+          <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
+        </div>
+        <button class="btn-primary" id="manual-btn" onclick="submitManual()">
+          ✂ Generer le clip
+        </button>
       </div>
-      <div class="field">
-        <label>Votre email</label>
-        <input type="email" id="manual-email" placeholder="votre@email.com" />
-        <p class="field-hint">Vous recevrez un lien de telechargement valide 1 heure</p>
-      </div>
-      <button class="btn-primary" id="manual-btn" onclick="submitShot('manual')">
-        Decouper la Video
-      </button>
+
     </div>
   </div>
 
-  <!-- Zone statut -->
+  <!-- Zone statut (partagee par tous les tabs) -->
   <div id="status-section" class="status-section">
 
     <div id="status-progress" class="status-card progress" style="display:none">
@@ -313,7 +580,7 @@
     </div>
 
     <div id="status-success" class="status-card success" style="display:none">
-      <div class="status-icon">&#10003;</div>
+      <div class="status-icon">✓</div>
       <div class="status-title">Votre shot est pret !</div>
       <div class="status-msg" id="success-msg">Le clip a ete genere avec succes.</div>
       <div class="result-actions">
@@ -334,10 +601,10 @@
 
   </div>
 
-  <!-- Infos -->
+  <!-- Infos pratiques -->
   <div class="info-grid">
     <div class="info-card">
-      <h3>Mode IA (auto)</h3>
+      <h3>Mode IA (Auto)</h3>
       <p>L'IA analyse la transcription et extrait le meilleur moment de 3 minutes. Traitement : 3 a 8 min.</p>
     </div>
     <div class="info-card">
@@ -367,124 +634,82 @@
   const POLL_INTERVAL = 6000;
   const POLL_MAX      = 900000;
 
-  let currentTab    = 'youtube';
-  let currentMode   = 'auto';
-  let pollTimer     = null;
-  let elapsedTimer  = null;
-  let elapsedSec    = 0;
+  let currentTab   = 'youtube';
+  let pollTimer    = null;
+  let elapsedTimer = null;
+  let elapsedSec   = 0;
   let pollingActive = false;
 
+  // ── Tabs ──────────────────────────────────────────────────────────────────
   function switchTab(tab) {
     currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach((b, i) => {
       b.classList.toggle('active',
         (i === 0 && tab === 'youtube') ||
-        (i === 1 && tab === 'drive') ||
+        (i === 1 && tab === 'drive')   ||
         (i === 2 && tab === 'manual')
       );
     });
-    document.getElementById('panel-youtube').classList.toggle('active', tab === 'youtube');
-    document.getElementById('panel-drive').classList.toggle('active', tab === 'drive');
-    document.getElementById('panel-manual').classList.toggle('active', tab === 'manual');
+    ['youtube','drive','manual'].forEach(t => {
+      document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+    });
     hideStatus();
+    if (tab === 'manual') loadYTiframeAPI();
   }
 
+  // ── Soumission IA ─────────────────────────────────────────────────────────
   async function submitShot(urlType) {
-    let urlInput, emailInput, btn;
-    let extraFields = {};
-
-    if (urlType === 'manual') {
-      urlInput   = document.getElementById('manual-url');
-      emailInput = document.getElementById('manual-email');
-      btn        = document.getElementById('manual-btn');
-      const start = document.getElementById('manual-start').value.trim();
-      const end   = document.getElementById('manual-end').value.trim();
-      if (!start || !end) {
-        alert('Veuillez entrer les timestamps de debut et de fin (ex: 1:23).');
-        return;
-      }
-      const tsRe = /^\d{1,2}:\d{2}(:\d{2})?$/;
-      if (!tsRe.test(start) || !tsRe.test(end)) {
-        alert('Format timestamps invalide. Utilisez MM:SS (ex: 1:23) ou HH:MM:SS (ex: 0:01:23).');
-        return;
-      }
-      extraFields = { mode: 'manual', start, end };
-      currentMode = 'manual';
-    } else {
-      urlInput   = document.getElementById(urlType === 'youtube' ? 'yt-url'   : 'drive-url');
-      emailInput = document.getElementById(urlType === 'youtube' ? 'yt-email' : 'drive-email');
-      btn        = document.getElementById(urlType === 'youtube' ? 'yt-btn'   : 'drive-btn');
-      extraFields = { mode: 'auto' };
-      currentMode = 'auto';
-    }
-
+    const urlInput   = document.getElementById(urlType === 'youtube' ? 'yt-url'    : 'drive-url');
+    const emailInput = document.getElementById(urlType === 'youtube' ? 'yt-email'  : 'drive-email');
+    const btn        = document.getElementById(urlType === 'youtube' ? 'yt-btn'    : 'drive-btn');
     const url   = urlInput.value.trim();
     const email = emailInput.value.trim();
-
     if (!url) { alert('Veuillez entrer une URL.'); urlInput.focus(); return; }
     if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) { alert('Veuillez entrer un email valide.'); emailInput.focus(); return; }
-
     btn.disabled = true;
     btn.textContent = 'Envoi en cours...';
     hideStatus();
-
     try {
       const resp = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, urlType: urlType === 'manual' ? 'youtube' : urlType, email, ...extraFields })
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url, urlType, email})
       });
-      const data = await resp.json();
-
-      if (!resp.ok || data.status === 'error') {
-        showError(data.message || 'Erreur lors de la soumission (' + resp.status + ')');
-        return;
-      }
-      const jobId = data.jobId;
-      if (!jobId) { showError('Reponse inattendue du serveur (jobId manquant).'); return; }
-      startPolling(jobId);
-
+      let data = {};
+      try { data = await resp.json(); } catch(e) {}
+      if (!resp.ok || data.status === 'error') { showError(data.message || 'Erreur serveur (' + resp.status + ').'); return; }
+      if (!data.jobId) { showError('Reponse inattendue (jobId manquant).'); return; }
+      startPolling(data.jobId);
     } catch (err) {
       showError('Impossible de contacter le serveur. (' + err.message + ')');
     } finally {
       btn.disabled = false;
-      btn.textContent = urlType === 'manual' ? 'Decouper la Video' : 'Generer le Shot (IA)';
+      btn.textContent = 'Generer le Shot (IA)';
     }
   }
 
+  // ── Polling ───────────────────────────────────────────────────────────────
   function startPolling(jobId) {
     pollingActive = true;
     elapsedSec = 0;
-    const initMsg = currentMode === 'manual'
-      ? 'Telechargement et decoupe de la video...'
-      : 'Transcription de la video, analyse IA, generation du clip...';
-    showProgress(initMsg);
+    showProgress('Transcription de la video, analyse IA, generation du clip...');
     updateProgressBar(0);
-
     elapsedTimer = setInterval(() => {
       elapsedSec++;
       document.getElementById('timer-display').textContent = formatTime(elapsedSec);
-      const maxSec = currentMode === 'manual' ? 180 : 900;
-      const pct = Math.min((elapsedSec / maxSec) * 100, 95);
+      const pct = Math.min((elapsedSec / 900) * 100, 95);
       updateProgressBar(pct);
-      if (currentMode === 'manual') {
-        if (elapsedSec === 20)  setProgressMsg('Decoupe du clip en cours...');
-        if (elapsedSec === 60)  setProgressMsg('Upload sur Google Drive...');
-      } else {
-        if (elapsedSec === 30)  setProgressMsg('Transcription en cours (Whisper)...');
-        if (elapsedSec === 120) setProgressMsg('Analyse IA du contenu...');
-        if (elapsedSec === 240) setProgressMsg('Generation du clip video...');
-        if (elapsedSec === 360) setProgressMsg('Upload sur Google Drive...');
-      }
+      if (elapsedSec === 30)  setProgressMsg('Transcription en cours (Whisper)...');
+      if (elapsedSec === 120) setProgressMsg('Analyse IA du contenu...');
+      if (elapsedSec === 240) setProgressMsg('Generation du clip video...');
+      if (elapsedSec === 360) setProgressMsg('Upload sur Google Drive...');
     }, 1000);
-
     let elapsed = 0;
     pollTimer = setInterval(async () => {
       elapsed += POLL_INTERVAL;
       if (!pollingActive) { clearPolling(); return; }
       if (elapsed >= POLL_MAX) {
         clearPolling();
-        showError('Delai depasse. Le traitement continue en arriere-plan — vous recevrez un email quand le shot sera pret.');
+        showError('Delai depasse (15 min). Le traitement continue en arriere-plan — vous recevrez un email quand le shot sera pret.');
         return;
       }
       await checkJobStatus(jobId);
@@ -499,16 +724,16 @@
       const text = await resp.text();
       const jsonStr = text.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, '');
       const gviz = JSON.parse(jsonStr);
-      const rows = gviz?.table?.rows;
-      if (!rows || rows.length === 0) return;
+      const rows = gviz && gviz.table && gviz.table.rows;
+      if (!rows || !rows.length) return;
       for (const row of rows) {
         const c = row.c;
         if (!c) continue;
-        const status   = c[4]?.v || '';
-        const shareUrl = c[5]?.v || '';
-        const errMsg   = c[6]?.v || '';
+        const status   = (c[4] && c[4].v) || '';
+        const shareUrl = (c[5] && c[5].v) || '';
+        const errMsg   = (c[6] && c[6].v) || '';
         if (status === 'done' && shareUrl) { clearPolling(); showSuccess(shareUrl); return; }
-        if (status === 'error') { clearPolling(); showError(errMsg || 'Erreur lors de la generation du shot.'); return; }
+        if (status === 'error') { clearPolling(); showError(errMsg || 'Erreur lors de la generation.'); return; }
       }
     } catch (e) { console.warn('Erreur polling:', e.message); }
   }
@@ -518,19 +743,16 @@
     if (pollTimer)    { clearInterval(pollTimer);    pollTimer    = null; }
     if (elapsedTimer) { clearInterval(elapsedTimer); elapsedTimer = null; }
   }
-
   function abandonPolling() {
     clearPolling();
     showError('Suivi annule. Le traitement continue en arriere-plan. Vous recevrez un email quand votre shot sera pret.');
   }
 
+  // ── Affichage etats ───────────────────────────────────────────────────────
   function hideStatus() {
     document.getElementById('status-section').classList.remove('visible');
-    document.getElementById('status-progress').style.display = 'none';
-    document.getElementById('status-success').style.display  = 'none';
-    document.getElementById('status-error').style.display    = 'none';
+    ['progress','success','error'].forEach(s => document.getElementById('status-' + s).style.display = 'none');
   }
-
   function showProgress(msg) {
     document.getElementById('status-section').classList.add('visible');
     document.getElementById('status-progress').style.display = 'block';
@@ -538,46 +760,269 @@
     document.getElementById('status-error').style.display    = 'none';
     document.getElementById('progress-msg').textContent = msg;
     document.getElementById('timer-display').textContent = '0:00';
-    document.getElementById('status-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('status-section').scrollIntoView({behavior:'smooth', block:'start'});
   }
-
   function showSuccess(shareUrl) {
     document.getElementById('status-section').classList.add('visible');
     document.getElementById('status-progress').style.display = 'none';
     document.getElementById('status-success').style.display  = 'block';
     document.getElementById('status-error').style.display    = 'none';
     document.getElementById('btn-download').href = shareUrl;
-    document.getElementById('success-msg').textContent =
-      'Votre shot a ete genere en ' + formatTime(elapsedSec) + '. Lien valide 1 heure.';
+    document.getElementById('success-msg').textContent = 'Votre shot a ete genere en ' + formatTime(elapsedSec) + '. Lien valide 1 heure.';
     updateProgressBar(100);
-    document.getElementById('status-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('status-section').scrollIntoView({behavior:'smooth', block:'start'});
   }
-
   function showError(msg) {
     document.getElementById('status-section').classList.add('visible');
     document.getElementById('status-progress').style.display = 'none';
     document.getElementById('status-success').style.display  = 'none';
     document.getElementById('status-error').style.display    = 'block';
     document.getElementById('error-msg').textContent = msg;
-    document.getElementById('status-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('status-section').scrollIntoView({behavior:'smooth', block:'start'});
   }
-
-  function setProgressMsg(msg) { document.getElementById('progress-msg').textContent = msg; }
-  function updateProgressBar(pct) { document.getElementById('progress-bar').style.width = pct + '%'; }
-  function formatTime(sec) { const m = Math.floor(sec / 60); const s = sec % 60; return m + ':' + String(s).padStart(2, '0'); }
-
+  function setProgressMsg(msg)      { document.getElementById('progress-msg').textContent = msg; }
+  function updateProgressBar(pct)   { document.getElementById('progress-bar').style.width = pct + '%'; }
+  function formatTime(sec) {
+    sec = Math.max(0, Math.round(sec));
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
   function resetForm() {
     clearPolling();
     hideStatus();
-    document.getElementById('yt-url').value     = '';
-    document.getElementById('yt-email').value   = '';
-    document.getElementById('drive-url').value  = '';
-    document.getElementById('drive-email').value = '';
-    document.getElementById('manual-url').value   = '';
-    document.getElementById('manual-start').value = '';
-    document.getElementById('manual-end').value   = '';
-    document.getElementById('manual-email').value = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    ['yt-url','yt-email','drive-url','drive-email','manual-url','manual-email'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  }
+
+  // ════════════════════════════════════════════════════════════════════════════
+  // ── COUPE MANUELLE — YouTube IFrame + Timeline ────────────────────────────
+  // ════════════════════════════════════════════════════════════════════════════
+  let ytPlayer        = null;
+  let ytAPIReady      = false;
+  let ytAPILoading    = false;
+  let ytDuration      = 0;
+  let manualStart     = 0;
+  let manualEnd       = 0;
+  let isDragging      = null;   // 'start' | 'end'
+  let cursorRaf       = null;
+  let previewTimeout  = null;
+
+  function loadYTiframeAPI() {
+    if (ytAPIReady || ytAPILoading) return;
+    ytAPILoading = true;
+    const s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  }
+
+  window.onYouTubeIframeAPIReady = function() {
+    ytAPIReady = true;
+  };
+
+  function extractVideoId(url) {
+    const pats = [
+      /[?&]v=([^&#]+)/,
+      /youtu\.be\/([^?&#/]+)/,
+      /youtube\.com\/embed\/([^?&#/]+)/,
+      /youtube\.com\/shorts\/([^?&#/]+)/
+    ];
+    for (const p of pats) { const m = url.match(p); if (m) return m[1]; }
+    return null;
+  }
+
+  function loadManualVideo() {
+    const url = document.getElementById('manual-url').value.trim();
+    const videoId = extractVideoId(url);
+    if (!videoId) { alert('URL YouTube invalide. Ex: https://www.youtube.com/watch?v=XXX'); return; }
+    const btn = document.getElementById('btn-load');
+    btn.disabled = true;
+    btn.textContent = 'Chargement...';
+
+    function doLoad() {
+      document.getElementById('yt-player-wrap').style.display = 'block';
+      if (ytPlayer && ytPlayer.loadVideoById) {
+        ytPlayer.loadVideoById(videoId);
+        ytPlayer.pauseVideo();
+      } else {
+        ytPlayer = new YT.Player('yt-player', {
+          videoId: videoId,
+          playerVars: { controls: 1, rel: 0, modestbranding: 1 },
+          events: {
+            onReady: function(e) {
+              e.target.pauseVideo();
+              onPlayerReady(videoId);
+            },
+            onStateChange: onPlayerStateChange
+          }
+        });
+      }
+    }
+
+    if (ytAPIReady) {
+      doLoad();
+    } else {
+      loadYTiframeAPI();
+      const wait = setInterval(function() {
+        if (ytAPIReady) { clearInterval(wait); doLoad(); }
+      }, 100);
+    }
+  }
+
+  function onPlayerReady(videoId) {
+    ytDuration  = ytPlayer.getDuration() || 600;
+    manualStart = 0;
+    manualEnd   = Math.min(180, ytDuration);
+
+    // Storyboard YouTube comme filmstrip
+    const thumbs = document.getElementById('tl-thumbs');
+    thumbs.style.backgroundImage = "url('https://i.ytimg.com/vi/" + videoId + "/storyboard3_L2.jpg')";
+
+    document.getElementById('timeline-section').style.display      = 'block';
+    document.getElementById('manual-submit-section').style.display = 'block';
+    document.getElementById('btn-load').disabled    = false;
+    document.getElementById('btn-load').textContent = 'Recharger';
+
+    updateTimeline();
+    startCursorLoop();
+  }
+
+  function onPlayerStateChange(e) {
+    const btn = document.getElementById('btn-play-pause');
+    if (!btn) return;
+    if (e.data === 1) { // PLAYING
+      btn.textContent = '⏸ Pause';
+    } else {
+      btn.textContent = '▶ Lire';
+      if (previewTimeout) { clearTimeout(previewTimeout); previewTimeout = null; }
+    }
+  }
+
+  // Curseur de lecture
+  function startCursorLoop() {
+    function step() {
+      if (ytPlayer && ytPlayer.getCurrentTime) {
+        const t = ytPlayer.getCurrentTime() || 0;
+        document.getElementById('tl-cursor').style.left = ((t / ytDuration) * 100) + '%';
+      }
+      cursorRaf = requestAnimationFrame(step);
+    }
+    if (cursorRaf) cancelAnimationFrame(cursorRaf);
+    cursorRaf = requestAnimationFrame(step);
+  }
+
+  function updateTimeline() {
+    const sp = (manualStart / ytDuration) * 100;
+    const ep = (manualEnd   / ytDuration) * 100;
+
+    document.getElementById('hdl-start').style.left   = sp + '%';
+    document.getElementById('hdl-end').style.left     = ep + '%';
+    document.getElementById('tl-selection').style.left  = sp + '%';
+    document.getElementById('tl-selection').style.width = (ep - sp) + '%';
+
+    const s = formatTime(manualStart);
+    const e = formatTime(manualEnd);
+    const d = formatTime(manualEnd - manualStart);
+    document.getElementById('tl-start-lbl').textContent = s;
+    document.getElementById('tl-end-lbl').textContent   = e;
+    document.getElementById('tl-dur-lbl').textContent   = d;
+    document.getElementById('tl-start-val').textContent = s;
+    document.getElementById('tl-end-val').textContent   = e;
+    document.getElementById('tl-dur-val').textContent   = d;
+  }
+
+  function getPosFromEvent(e) {
+    const rect = document.getElementById('tl-outer').getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * ytDuration;
+  }
+
+  // Drag handles
+  document.addEventListener('mousedown', function(e) {
+    if (e.target.closest('#hdl-start')) { isDragging = 'start'; e.preventDefault(); }
+    else if (e.target.closest('#hdl-end')) { isDragging = 'end'; e.preventDefault(); }
+    else if (e.target.closest('#tl-outer') && !e.target.closest('.tl-handle')) {
+      const t = getPosFromEvent(e);
+      seekTo(t);
+    }
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    const t = getPosFromEvent(e);
+    if (isDragging === 'start') manualStart = Math.max(0, Math.min(t, manualEnd - 2));
+    else                        manualEnd   = Math.min(ytDuration, Math.max(t, manualStart + 2));
+    updateTimeline();
+  });
+  document.addEventListener('mouseup', function() { isDragging = null; });
+
+  document.addEventListener('touchstart', function(e) {
+    if (e.target.closest('#hdl-start')) isDragging = 'start';
+    else if (e.target.closest('#hdl-end')) isDragging = 'end';
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    if (!isDragging) return;
+    const t = getPosFromEvent(e);
+    if (isDragging === 'start') manualStart = Math.max(0, Math.min(t, manualEnd - 2));
+    else                        manualEnd   = Math.min(ytDuration, Math.max(t, manualStart + 2));
+    updateTimeline();
+  }, { passive: true });
+  document.addEventListener('touchend', function() { isDragging = null; });
+
+  function seekTo(t) {
+    if (ytPlayer && ytPlayer.seekTo) ytPlayer.seekTo(t, true);
+  }
+  function togglePlay() {
+    if (!ytPlayer) return;
+    if (ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo();
+    else ytPlayer.playVideo();
+  }
+  function previewSelection() {
+    if (!ytPlayer) return;
+    if (previewTimeout) { clearTimeout(previewTimeout); previewTimeout = null; }
+    seekTo(manualStart);
+    ytPlayer.playVideo();
+    previewTimeout = setTimeout(function() {
+      if (ytPlayer) ytPlayer.pauseVideo();
+      previewTimeout = null;
+    }, (manualEnd - manualStart) * 1000);
+  }
+
+  // Soumission mode manuel
+  async function submitManual() {
+    const url   = document.getElementById('manual-url').value.trim();
+    const email = document.getElementById('manual-email').value.trim();
+    if (!url) { alert('Veuillez charger une video.'); return; }
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) { alert('Email invalide.'); return; }
+    if (manualEnd <= manualStart) { alert('La selection est invalide.'); return; }
+
+    const btn = document.getElementById('manual-btn');
+    btn.disabled = true;
+    btn.textContent = 'Envoi en cours...';
+    hideStatus();
+
+    try {
+      const resp = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          url, email,
+          urlType:   'youtube-manual',
+          startTime: Math.round(manualStart),
+          endTime:   Math.round(manualEnd)
+        })
+      });
+      let data = {};
+      try { data = await resp.json(); } catch(e) {}
+      if (!resp.ok || data.status === 'error') { showError(data.message || 'Erreur serveur.'); return; }
+      if (!data.jobId) { showError('Reponse inattendue (jobId manquant).'); return; }
+      startPolling(data.jobId);
+    } catch (err) {
+      showError('Impossible de contacter le serveur. (' + err.message + ')');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '✂ Generer le clip';
+    }
   }
 </script>
 </body>
