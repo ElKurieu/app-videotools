@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -1078,7 +1078,8 @@
       /[?&]v=([^&#]+)/,
       /youtu\.be\/([^?&#/]+)/,
       /youtube\.com\/embed\/([^?&#/]+)/,
-      /youtube\.com\/shorts\/([^?&#/]+)/
+      /youtube\.com\/shorts\/([^?&#/]+)/,
+      /youtube\.com\/live\/([^?&#/]+)/
     ];
     for (const p of pats) { const m = url.match(p); if (m) return m[1]; }
     return null;
