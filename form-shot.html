@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
@@ -543,26 +543,6 @@
       color: var(--text-dim);
     }
     .pc-sel-info span { color: var(--gold); font-weight: 700; font-family: monospace; }
-
-    /* ── Resultats de recherche ── */
-    .search-result-pre {
-      background: var(--card2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem;
-      font-family: monospace;
-      font-size: 0.85rem;
-      line-height: 1.7;
-      color: var(--text);
-      max-height: 420px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      margin-top: 0.75rem;
-    }
-    .search-result-pre::-webkit-scrollbar { width: 6px; }
-    .search-result-pre::-webkit-scrollbar-track { background: #1a1a1a; }
-    .search-result-pre::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
   </style>
 </head>
 <body>
@@ -593,7 +573,6 @@
     <button class="tab-btn active"  onclick="switchTab('youtube')">YouTube (IA)</button>
     <button class="tab-btn"         onclick="switchTab('drive')">Google Drive (IA)</button>
     <button class="tab-btn"         onclick="switchTab('manual')">Coupe Manuelle</button>
-    <button class="tab-btn"         onclick="switchTab('search')">Recherche</button>
   </div>
 
   <!-- Tab YouTube IA -->
@@ -815,25 +794,6 @@
     </div>
   </div>
 
-  <!-- Tab Recherche Timestamps -->
-  <div id="panel-search" class="tab-panel">
-    <div class="form-card">
-      <div class="field">
-        <label>URL YouTube ou Google Drive</label>
-        <input type="url" id="search-url" placeholder="https://www.youtube.com/watch?v=..." />
-        <p class="field-hint">YouTube : sous-titres requis &nbsp;·&nbsp; Google Drive : transcription Whisper (plus lent)</p>
-      </div>
-      <div class="field">
-        <label>Expression a rechercher</label>
-        <input type="text" id="search-query" placeholder="ex : intelligence artificielle, rechauffement climatique..." onkeydown="if(event.key==='Enter') submitSearch()" />
-        <p class="field-hint">Entrez un ou plusieurs mots — tous les passages correspondants seront listes avec leur timestamp</p>
-      </div>
-      <button class="btn-primary" id="search-btn" onclick="submitSearch()">
-        Rechercher les timestamps
-      </button>
-    </div>
-  </div>
-
   <!-- Zone statut (partagee par tous les tabs) -->
   <div id="status-section" class="status-section">
 
@@ -867,17 +827,6 @@
       </div>
     </div>
 
-    <div id="status-search" class="status-card success" style="display:none">
-      <div class="status-icon">&#128269;</div>
-      <div class="status-title">Recherche terminee !</div>
-      <div class="status-msg" id="search-result-summary"></div>
-      <pre class="search-result-pre" id="search-result-text"></pre>
-      <div class="result-actions">
-        <button class="btn-result primary" onclick="copySearchResult(event)">Copier les resultats</button>
-        <button class="btn-result secondary" onclick="resetForm()">Nouvelle recherche</button>
-      </div>
-    </div>
-
   </div>
 
   <!-- Infos pratiques -->
@@ -907,15 +856,14 @@
 </footer>
 
 <script>
-  const WEBHOOK_URL    = 'https://n8n.srv1037761.hstgr.cloud/webhook/shot-web';
-  const SEARCH_WEBHOOK = 'https://n8n.srv1037761.hstgr.cloud/webhook/search-timestamps';
+  const WEBHOOK_URL        = 'https://n8n.srv1037761.hstgr.cloud/webhook/shot-web';
+  const WEBHOOK_MANUAL_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/shot-manual';
   const SHEET_ID      = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
   const SHEET_NAME    = 'shot_jobs';
   const POLL_INTERVAL = 6000;
   const POLL_MAX      = 900000;
 
   let currentTab   = 'youtube';
-  let jobMode      = 'shot'; // 'shot' | 'search'
   let pollTimer    = null;
   let elapsedTimer = null;
   let elapsedSec   = 0;
@@ -928,11 +876,10 @@
       b.classList.toggle('active',
         (i === 0 && tab === 'youtube') ||
         (i === 1 && tab === 'drive')   ||
-        (i === 2 && tab === 'manual')  ||
-        (i === 3 && tab === 'search')
+        (i === 2 && tab === 'manual')
       );
     });
-    ['youtube','drive','manual','search'].forEach(t => {
+    ['youtube','drive','manual'].forEach(t => {
       document.getElementById('panel-' + t).classList.toggle('active', t === tab);
     });
     hideStatus();
@@ -989,15 +936,12 @@
       if (elapsedSec === 360) setProgressMsg('Upload sur Google Drive...');
     }, 1000);
     let elapsed = 0;
-    const timeoutMsg = (jobMode === 'search')
-      ? 'Delai depasse (15 min). La transcription est peut-etre trop longue.'
-      : 'Delai depasse (15 min). Le traitement continue en arriere-plan — vous recevrez un email quand le shot sera pret.';
     pollTimer = setInterval(async () => {
       elapsed += POLL_INTERVAL;
       if (!pollingActive) { clearPolling(); return; }
       if (elapsed >= POLL_MAX) {
         clearPolling();
-        showError(timeoutMsg);
+        showError('Delai depasse (15 min). Le traitement continue en arriere-plan — vous recevrez un email quand le shot sera pret.');
         return;
       }
       await checkJobStatus(jobId);
@@ -1020,12 +964,7 @@
         const status   = (c[4] && c[4].v) || '';
         const shareUrl = (c[5] && c[5].v) || '';
         const errMsg   = (c[6] && c[6].v) || '';
-        if (status === 'done') {
-          clearPolling();
-          if (jobMode === 'search') { showSearchResult(shareUrl || 'Aucun resultat.'); }
-          else if (shareUrl) { showSuccess(shareUrl); }
-          return;
-        }
+        if (status === 'done' && shareUrl) { clearPolling(); showSuccess(shareUrl); return; }
         if (status === 'error') { clearPolling(); showError(errMsg || 'Erreur lors de la generation.'); return; }
       }
     } catch (e) { console.warn('Erreur polling:', e.message); }
@@ -1044,7 +983,7 @@
   // ── Affichage etats ───────────────────────────────────────────────────────
   function hideStatus() {
     document.getElementById('status-section').classList.remove('visible');
-    ['progress','success','error','search'].forEach(s => document.getElementById('status-' + s).style.display = 'none');
+    ['progress','success','error'].forEach(s => document.getElementById('status-' + s).style.display = 'none');
   }
   function showProgress(msg) {
     document.getElementById('status-section').classList.add('visible');
@@ -1082,8 +1021,7 @@
   function resetForm() {
     clearPolling();
     hideStatus();
-    jobMode = 'shot';
-    ['yt-url','yt-email','drive-url','drive-email','manual-url','manual-email','search-url','search-query'].forEach(id => {
+    ['yt-url','yt-email','drive-url','drive-email','manual-url','manual-email'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -1468,98 +1406,31 @@
     }
   }
 
+  function secToHMS(sec) {
+    sec = Math.round(sec);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
   // Soumission mode manuel
-  // ── Recherche Timestamps ──────────────────────────────────────────────────
-  async function submitSearch() {
-    const url   = document.getElementById('search-url').value.trim();
-    const query = document.getElementById('search-query').value.trim();
-    const btn   = document.getElementById('search-btn');
-    if (!url)   { alert('Veuillez entrer une URL.'); document.getElementById('search-url').focus(); return; }
-    if (!query) { alert('Veuillez entrer une expression a rechercher.'); document.getElementById('search-query').focus(); return; }
-    btn.disabled = true;
-    btn.textContent = 'Recherche en cours...';
-    hideStatus();
-    jobMode = 'search';
-    try {
-      const resp = await fetch(SEARCH_WEBHOOK, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ url, query })
-      });
-      let data = {};
-      try { data = await resp.json(); } catch(e) {}
-      if (!resp.ok || data.error) { showError(data.error || 'Erreur serveur (' + resp.status + ').'); return; }
-      if (!data.jobId) { showError('Reponse inattendue du serveur.'); return; }
-      elapsedSec = 0;
-      showProgress('Transcription et recherche en cours...');
-      updateProgressBar(0);
-      elapsedTimer = setInterval(() => {
-        elapsedSec++;
-        document.getElementById('timer-display').textContent = formatTime(elapsedSec);
-        updateProgressBar(Math.min((elapsedSec / 120) * 100, 90));
-        if (elapsedSec === 15) setProgressMsg('Recuperation de la transcription...');
-        if (elapsedSec === 40) setProgressMsg('Analyse du contenu en cours...');
-      }, 1000);
-      pollingActive = true;
-      let elapsed = 0;
-      pollTimer = setInterval(async () => {
-        elapsed += POLL_INTERVAL;
-        if (!pollingActive) { clearPolling(); return; }
-        if (elapsed >= POLL_MAX) { clearPolling(); showError('Delai depasse. La video est peut-etre trop longue ou sans sous-titres.'); return; }
-        await checkJobStatus(data.jobId);
-      }, POLL_INTERVAL);
-    } catch (err) {
-      showError('Impossible de contacter le serveur. (' + err.message + ')');
-    } finally {
-      btn.disabled = false;
-      btn.textContent = 'Rechercher les timestamps';
-    }
-  }
-
-  function showSearchResult(text) {
-    document.getElementById('status-section').classList.add('visible');
-    document.getElementById('status-progress').style.display = 'none';
-    document.getElementById('status-success').style.display  = 'none';
-    document.getElementById('status-error').style.display    = 'none';
-    document.getElementById('status-search').style.display   = 'block';
-    document.getElementById('search-result-text').textContent = text;
-    const lines = text.split('\n').length;
-    document.getElementById('search-result-summary').textContent =
-      'Resultats trouves en ' + formatTime(elapsedSec) + '. Copiez les timestamps ci-dessous.';
-    updateProgressBar(100);
-    document.getElementById('status-section').scrollIntoView({behavior:'smooth', block:'start'});
-  }
-
-  function copySearchResult(event) {
-    const text = document.getElementById('search-result-text').textContent;
-    const btn = event.target;
-    navigator.clipboard.writeText(text).then(() => {
-      const orig = btn.textContent;
-      btn.textContent = 'Copie !';
-      setTimeout(() => { btn.textContent = orig; }, 2000);
-    }).catch(() => { alert('Impossible de copier. Selectionnez le texte manuellement.'); });
-  }
-
   async function submitManual() {
     const url   = document.getElementById('manual-url').value.trim();
     const email = document.getElementById('manual-email').value.trim();
     if (!url) { alert('Veuillez charger une video.'); return; }
     if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) { alert('Email invalide.'); return; }
 
-    let startTime, endTime, urlType;
+    let startSec, endSec;
 
     if (manualSourceType === 'drive') {
-      const s = tsToSec(document.getElementById('drive-start').value);
-      const e = tsToSec(document.getElementById('drive-end').value);
-      if (e <= s) { alert('La fin doit etre apres le debut.'); return; }
-      startTime = s;
-      endTime   = e;
-      urlType   = 'drive-manual';
+      startSec = tsToSec(document.getElementById('drive-start').value);
+      endSec   = tsToSec(document.getElementById('drive-end').value);
+      if (endSec <= startSec) { alert('La fin doit etre apres le debut.'); return; }
     } else {
       if (manualEnd <= manualStart) { alert('La selection est invalide.'); return; }
-      startTime = Math.round(manualStart);
-      endTime   = Math.round(manualEnd);
-      urlType   = 'youtube-manual';
+      startSec = Math.round(manualStart);
+      endSec   = Math.round(manualEnd);
     }
 
     const btn = document.getElementById('manual-btn');
@@ -1568,10 +1439,10 @@
     hideStatus();
 
     try {
-      const resp = await fetch(WEBHOOK_URL, {
+      const resp = await fetch(WEBHOOK_MANUAL_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ url, email, urlType, startTime, endTime, speed: manualSpeed, format: shotFormat })
+        body: JSON.stringify({ url, email, start: secToHMS(startSec), end: secToHMS(endSec), speed: manualSpeed })
       });
       let data = {};
       try { data = await resp.json(); } catch(e) {}
