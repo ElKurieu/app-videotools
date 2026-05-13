@@ -51,7 +51,9 @@
     .field { margin-bottom: 20px; }
     .field label { display: block; font-size: 13px; font-weight: 500; color: #aaa; margin-bottom: 8px; }
     .field label span { color: #D4AF37; margin-left: 2px; }
-    .field input[type="url"], .field select { width: 100%; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; color: #f0ede4; font-size: 14px; font-family: inherit; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; }
+    .field input[type="url"],
+    .field input[type="email"],
+    .field select { width: 100%; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 14px; color: #f0ede4; font-size: 14px; font-family: inherit; transition: border-color 0.2s; appearance: none; -webkit-appearance: none; }
     .field input:focus, .field select:focus { outline: none; border-color: #D4AF37; }
     .field input::placeholder { color: #444; }
     .select-wrapper { position: relative; }
@@ -188,6 +190,17 @@
         🎙️ Arabe : voix synthétique fixe (OpenAI TTS · alloy)
       </div>
     </div>
+
+    <hr class="divider" />
+
+    <!-- EMAIL -->
+    <div class="field">
+      <label>Adresse e-mail <span style="color:#555; font-weight:400;">(optionnel — recevoir le lien par mail)</span></label>
+      <input type="email" id="email" placeholder="votre@email.com" />
+      <div class="field-help">Si renseigné, vous recevrez le lien de téléchargement par email dès que la vidéo est prête.</div>
+    </div>
+
+    <hr class="divider" />
 
     <!-- SUBMIT -->
     <button class="btn-submit" id="submitBtn" onclick="submitForm()">
@@ -332,6 +345,7 @@
     const jobId = crypto.randomUUID();
     const langue = document.getElementById('langue').value;
     const vitesse = document.getElementById('vitesse').value;
+    const email = document.getElementById('email').value.trim();
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
@@ -339,7 +353,6 @@
     let fetchOptions;
 
     if (activeTab === 'fichier') {
-      // Lecture en base64 pour éviter les problèmes multipart avec n8n
       const f = (fileInput.files && fileInput.files[0]) || droppedFile;
       const fileBase64 = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -350,7 +363,7 @@
       fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId, langue, vitesse, fileBase64, fileName: f.name }),
+        body: JSON.stringify({ jobId, langue, vitesse, fileBase64, fileName: f.name, email }),
         signal: controller.signal
       };
     } else {
@@ -358,6 +371,7 @@
       formData.append('jobId', jobId);
       formData.append('langue', langue);
       formData.append('vitesse', vitesse);
+      if (email) formData.append('email', email);
       if (activeTab === 'texte') {
         formData.append('texte', document.getElementById('texteInput').value.trim());
       } else {
