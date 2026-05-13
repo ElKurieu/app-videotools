@@ -175,6 +175,56 @@
       margin: 28px 0;
     }
 
+    /* TOGGLE VITESSE */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      user-select: none;
+    }
+    .toggle-row:hover { border-color: #3a3a3a; }
+    .toggle-row.no-accel { border-color: #555; background: #161616; }
+    .toggle-info { display: flex; flex-direction: column; gap: 3px; }
+    .toggle-label { font-size: 13px; font-weight: 500; color: #aaa; }
+    .toggle-desc { font-size: 11px; color: #555; }
+    .toggle-desc .badge {
+      display: inline-block;
+      background: #1a1500; border: 1px solid #3a2800;
+      border-radius: 4px; padding: 1px 6px;
+      color: #D4AF37; font-size: 11px; font-weight: 600;
+      margin-right: 4px;
+    }
+    .toggle-desc .badge-off {
+      background: #111; border: 1px solid #333; color: #888;
+    }
+    .toggle-switch {
+      position: relative; width: 40px; height: 22px; flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: #2a2a2a; border-radius: 22px;
+      transition: background 0.2s; cursor: pointer;
+    }
+    .toggle-track::before {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px; left: 3px; top: 3px;
+      background: #555; border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .toggle-switch input:checked + .toggle-track { background: #3a3a3a; }
+    .toggle-switch input:checked + .toggle-track::before {
+      transform: translateX(18px); background: #f0ede4;
+    }
+
     /* SUBMIT */
     .btn-submit {
       width: 100%;
@@ -406,6 +456,20 @@
       </div>
     </div>
 
+    <!-- TOGGLE VITESSE -->
+    <label class="toggle-row" id="toggleRow" for="toggleVitesse">
+      <div class="toggle-info">
+        <span class="toggle-label">Vitesse de lecture</span>
+        <span class="toggle-desc" id="toggleDesc">
+          <span class="badge" id="badgeActuel">x1.7</span> accélération activée par défaut
+        </span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="toggleVitesse" onchange="onToggleVitesse(this)" />
+        <span class="toggle-track"></span>
+      </div>
+    </label>
+
     <hr class="divider" />
 
     <!-- DESTINATION -->
@@ -478,6 +542,20 @@
   let activeTab = 'upload';
   let droppedFile = null;
   let pollTimer = null;
+
+  // TOGGLE VITESSE
+  function onToggleVitesse(checkbox) {
+    const row = document.getElementById('toggleRow');
+    const desc = document.getElementById('toggleDesc');
+    const badge = document.getElementById('badgeActuel');
+    if (checkbox.checked) {
+      row.classList.add('no-accel');
+      desc.innerHTML = '<span class="badge badge-off">x1</span> sans accélération';
+    } else {
+      row.classList.remove('no-accel');
+      desc.innerHTML = '<span class="badge">x1.7</span> accélération activée par défaut';
+    }
+  }
 
   // TAB SWITCH
   function switchTab(tab) {
@@ -587,6 +665,7 @@
 
     const jobId = crypto.randomUUID();
     const destFolderUrl = document.getElementById('destFolderUrl').value.trim();
+    const vitesse = document.getElementById('toggleVitesse').checked ? '1' : '1.7';
 
     const formData = new FormData();
     const fileToSend = (fileInput.files && fileInput.files[0]) || droppedFile;
@@ -600,6 +679,7 @@
     formData.append('langueOrigine', document.getElementById('langueOrigine').value);
     formData.append('langueDoublage', document.getElementById('langueDoublage').value);
     formData.append('voix', document.getElementById('voix').value);
+    formData.append('vitesse', vitesse);
     formData.append('jobId', jobId);
     if (destFolderUrl) formData.append('destFolderUrl', destFolderUrl);
     const email = document.getElementById('email').value.trim();
@@ -712,6 +792,9 @@
     document.getElementById('langueDoublage').value = '';
     document.getElementById('voix').value = 'nova';
     document.getElementById('email').value = '';
+    const toggle = document.getElementById('toggleVitesse');
+    toggle.checked = false;
+    onToggleVitesse(toggle);
   }
 
   function abandonPolling() {
