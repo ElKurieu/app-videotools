@@ -623,7 +623,7 @@
     }
     if (activeTab === 'youtube') {
       const url = document.getElementById('youtubeUrl').value.trim();
-      const ytPattern = /^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)/;
+      const ytPattern = /^https?:\/\/(www\.)?(youtube\.com\/(watch\?v=|shorts\/|live\/)|youtu\.be\/)/;
       if (!url || !ytPattern.test(url)) {
         document.getElementById('err-youtube').style.display = 'block';
         document.getElementById('youtubeUrl').classList.add('invalid');
