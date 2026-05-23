@@ -279,6 +279,124 @@
     border-top: 1px solid var(--border);
   }
   footer a { color: var(--gold); text-decoration: none; }
+
+  /* ── LOGIN OVERLAY ── */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+  }
+  .login-overlay.hidden { display: none; }
+
+  .login-card {
+    width: 100%;
+    max-width: 360px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .login-logo { font-size: 3rem; margin-bottom: 0.5rem; }
+
+  .login-card h2 { color: var(--gold); font-size: 1.3rem; margin-bottom: 0.5rem; }
+
+  .login-card p {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  .login-card p strong { color: var(--text); }
+
+  .login-input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+  .login-input:focus { border-color: var(--gold); }
+  .login-input::placeholder { color: #444; }
+
+  #login-code {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5rem;
+    color: var(--gold);
+  }
+
+  .login-btn {
+    width: 100%;
+    padding: 0.85rem;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dim) 100%);
+    border: none;
+    border-radius: 10px;
+    color: #000;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-bottom: 0.5rem;
+    font-family: inherit;
+  }
+  .login-btn:hover    { opacity: 0.9; transform: translateY(-1px); }
+  .login-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .login-btn-sec {
+    width: 100%;
+    padding: 0.7rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    margin-top: 0.25rem;
+  }
+  .login-btn-sec:hover { border-color: var(--gold); color: var(--text); }
+
+  .login-error {
+    color: #f87171;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+    min-height: 1.2rem;
+  }
+  .login-error.hidden { visibility: hidden; }
+
+  .login-sep {
+    color: #333;
+    font-size: 0.7rem;
+    margin: 0.6rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .login-spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
 </style>
 </head>
 <body>
@@ -347,7 +465,137 @@
   <a href="index.html">VideoTools</a> · Traduction FR · EN · RO
 </footer>
 
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay" class="login-overlay hidden">
+  <div class="login-card">
+    <div class="login-logo">🌐</div>
+
+    <!-- Étape 1 : email -->
+    <div id="login-step-email">
+      <h2>Connexion</h2>
+      <p>Entrez votre adresse email pour recevoir un code de vérification.</p>
+      <input type="email" id="login-email" class="login-input" placeholder="votre@email.com"
+             autocomplete="email">
+      <button id="btn-send-code" class="login-btn" onclick="sendCode()">Envoyer le code</button>
+      <div id="login-error1" class="login-error hidden">.</div>
+    </div>
+
+    <!-- Étape 2 : code -->
+    <div id="login-step-code" class="hidden">
+      <h2>Code de vérification</h2>
+      <p>Code envoyé à<br><strong id="login-email-display"></strong></p>
+      <input type="text" id="login-code" class="login-input" placeholder="000000"
+             maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+      <button id="btn-verify" class="login-btn" onclick="verifyCode()">Vérifier</button>
+      <div id="login-error2" class="login-error hidden">.</div>
+      <div class="login-sep">ou</div>
+      <button class="login-btn-sec" onclick="backToEmail()">Changer d'email</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// ── AUTHENTIFICATION OTP ──
+const AUTH_REQ = 'https://n8n.srv1037761.hstgr.cloud/webhook/auth-request';
+const AUTH_VER = 'https://n8n.srv1037761.hstgr.cloud/webhook/auth-verify';
+const AUTH_KEY = 'traduction_auth';
+
+function checkAuth() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) { showLoginScreen(); return; }
+    const auth = JSON.parse(raw);
+    if (!auth.token || new Date(auth.expiresAt) < new Date()) {
+      localStorage.removeItem(AUTH_KEY);
+      showLoginScreen();
+    }
+  } catch(e) { showLoginScreen(); }
+}
+
+function showLoginScreen() { document.getElementById('login-overlay').classList.remove('hidden'); }
+function hideLoginScreen()  { document.getElementById('login-overlay').classList.add('hidden'); }
+
+async function sendCode() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) return;
+  setLoginErr('login-error1', '');
+  setBtnLoad('btn-send-code', true, 'Envoi…');
+  try {
+    const res  = await fetch(AUTH_REQ, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }) });
+    const data = await res.json();
+    if (res.ok && data.status === 'sent') {
+      document.getElementById('login-email-display').textContent = email;
+      document.getElementById('login-step-email').classList.add('hidden');
+      document.getElementById('login-step-code').classList.remove('hidden');
+      setTimeout(() => document.getElementById('login-code').focus(), 100);
+    } else {
+      setLoginErr('login-error1', data.error || 'Email non reconnu. Contactez l\'administrateur.');
+    }
+  } catch(e) { setLoginErr('login-error1', 'Erreur de connexion. Réessayez.'); }
+  setBtnLoad('btn-send-code', false);
+}
+
+async function verifyCode() {
+  const email = document.getElementById('login-email').value.trim();
+  const code  = document.getElementById('login-code').value.trim();
+  if (!code || code.length < 6) return;
+  setLoginErr('login-error2', '');
+  setBtnLoad('btn-verify', true, 'Vérification…');
+  try {
+    const res  = await fetch(AUTH_VER, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }) });
+    const data = await res.json();
+    if (res.ok && data.status === 'ok') {
+      localStorage.setItem(AUTH_KEY, JSON.stringify({
+        token: data.token, email: data.email, expiresAt: data.expiresAt
+      }));
+      hideLoginScreen();
+    } else {
+      setLoginErr('login-error2', data.error || 'Code invalide ou expiré.');
+    }
+  } catch(e) { setLoginErr('login-error2', 'Erreur de connexion. Réessayez.'); }
+  setBtnLoad('btn-verify', false);
+}
+
+function backToEmail() {
+  document.getElementById('login-step-code').classList.add('hidden');
+  document.getElementById('login-step-email').classList.remove('hidden');
+  document.getElementById('login-code').value = '';
+  setLoginErr('login-error2', '');
+}
+
+function setLoginErr(id, msg) {
+  const el = document.getElementById(id);
+  el.textContent = msg || '.';
+  el.classList.toggle('hidden', !msg);
+}
+
+function setBtnLoad(id, loading, label) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.disabled = loading;
+  if (loading && label) {
+    btn._orig = btn.innerHTML;
+    btn.innerHTML = '<span class="login-spinner"></span>' + label;
+  } else if (!loading && btn._orig) {
+    btn.innerHTML = btn._orig;
+  }
+}
+
+// Vérif auth au chargement
+checkAuth();
+
+// Touche Entrée sur les inputs login
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-email').addEventListener('keydown', e => { if (e.key === 'Enter') sendCode(); });
+  document.getElementById('login-code').addEventListener('keydown',  e => { if (e.key === 'Enter') verifyCode(); });
+  document.getElementById('login-code').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
+});
+
+// ── TRADUCTION ──
 const WEBHOOK = 'https://n8n.srv1037761.hstgr.cloud/webhook/translate';
 
 const LANGS = [
