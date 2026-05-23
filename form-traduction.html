@@ -232,6 +232,37 @@
     text-align: center; padding: 0.4rem 0; display: none;
   }
 
+  /* ── VOICE SELECTOR ── */
+  .voice-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid var(--border);
+    background: var(--card2);
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+  .voice-bar label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .voice-select {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.8rem;
+    padding: 4px 8px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .voice-select:focus { border-color: var(--gold); }
+  .voice-bar.hidden { display: none; }
+
   footer {
     text-align: center;
     padding: 1.2rem;
@@ -288,6 +319,10 @@
       </div>
     </div>
     <textarea id="result-text" placeholder="La traduction apparaîtra ici…" readonly></textarea>
+    <div class="voice-bar hidden" id="voice-bar">
+      <label>🔊 Voix :</label>
+      <select class="voice-select" id="voice-select" onchange="onVoiceChange()"></select>
+    </div>
   </div>
 
   <div class="no-speech-hint" id="no-speech-hint">
@@ -330,6 +365,7 @@ if (!SpeechRecognition) {
 
 // ── Rendu des sélecteurs ──
 function renderPickers() {
+  renderVoiceSelector();
   ['top', 'bottom'].forEach(side => {
     const isSrc = side === 'top';
     const activeIdx = isSrc ? srcIdx : tgtIdx;
@@ -522,18 +558,82 @@ function copyTranslation() {
   });
 }
 
-// ── Synthèse vocale ──
+// ── Synthèse vocale + sélecteur de voix ──
+let availableVoices = [];
+let selectedVoice = null;
+const voicePrefs = {}; // { 'fr-FR': voiceName, ... }
+
+function loadVoices() {
+  if (!window.speechSynthesis) return;
+  availableVoices = window.speechSynthesis.getVoices();
+  renderVoiceSelector();
+}
+
+function renderVoiceSelector() {
+  const tgtLang = LANGS[tgtIdx];
+  const bar = document.getElementById('voice-bar');
+  const sel = document.getElementById('voice-select');
+
+  // Filtrer les voix pour la langue cible (match sur les 2 premiers chars ex: "fr")
+  const voices = availableVoices.filter(v =>
+    v.lang.toLowerCase().startsWith(tgtLang.code) ||
+    v.lang.toLowerCase().startsWith(tgtLang.speech.toLowerCase())
+  );
+
+  if (voices.length <= 1) {
+    bar.classList.add('hidden');
+    selectedVoice = voices[0] || null;
+    return;
+  }
+
+  bar.classList.remove('hidden');
+  sel.innerHTML = '';
+  const savedName = voicePrefs[tgtLang.speech] || '';
+
+  voices.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v.name;
+    // Affichage lisible : nom + pays entre parenthèses
+    const country = v.lang.split('-')[1] || '';
+    opt.textContent = v.name + (country ? ' (' + country + ')' : '');
+    if (v.name === savedName) opt.selected = true;
+    sel.appendChild(opt);
+  });
+
+  // Sélectionner la voix sauvegardée ou la première
+  selectedVoice = voices.find(v => v.name === savedName) || voices[0];
+  sel.value = selectedVoice.name;
+}
+
+function onVoiceChange() {
+  const sel = document.getElementById('voice-select');
+  const tgtLang = LANGS[tgtIdx];
+  selectedVoice = availableVoices.find(v => v.name === sel.value) || null;
+  if (selectedVoice) voicePrefs[tgtLang.speech] = selectedVoice.name;
+}
+
 function speakTranslation() {
   const txt = document.getElementById('result-text').value;
   if (!txt || !window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(txt);
-  utt.lang = LANGS[tgtIdx].speech;
+  if (selectedVoice) {
+    utt.voice = selectedVoice;
+    utt.lang  = selectedVoice.lang;
+  } else {
+    utt.lang = LANGS[tgtIdx].speech;
+  }
   window.speechSynthesis.speak(utt);
 }
 
 // Init
 renderPickers();
+
+// Les voix sont chargées de manière asynchrone (surtout sur iOS)
+if (window.speechSynthesis) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
 </script>
 </body>
 </html>
