@@ -494,6 +494,18 @@
       <div id="login-error1" class="login-error hidden">.</div>
     </div>
 
+    <!-- Étape 1b : nom (nouvel utilisateur) -->
+    <div id="login-step-name" class="hidden">
+      <h2>Créer un accès</h2>
+      <p>Entrez votre prénom pour créer votre accès.</p>
+      <input type="text" id="login-name" class="login-input" placeholder="Votre prénom"
+             autocomplete="given-name">
+      <button id="btn-register" class="login-btn" onclick="registerUser()">Créer mon accès</button>
+      <div id="login-error3" class="login-error hidden">.</div>
+      <div class="login-sep">ou</div>
+      <button class="login-btn-sec" onclick="backToEmail()">Retour</button>
+    </div>
+
     <!-- Étape 2 : code -->
     <div id="login-step-code" class="hidden">
       <h2>Code de vérification</h2>
@@ -544,8 +556,12 @@ async function sendCode() {
       document.getElementById('login-step-email').classList.add('hidden');
       document.getElementById('login-step-code').classList.remove('hidden');
       setTimeout(() => document.getElementById('login-code').focus(), 100);
+    } else if (res.ok && data.status === 'new_user') {
+      document.getElementById('login-step-email').classList.add('hidden');
+      document.getElementById('login-step-name').classList.remove('hidden');
+      setTimeout(() => document.getElementById('login-name').focus(), 100);
     } else {
-      setLoginErr('login-error1', data.error || 'Email non reconnu. Contactez l\'administrateur.');
+      setLoginErr('login-error1', data.error || 'Erreur. Réessayez.');
     }
   } catch(e) { setLoginErr('login-error1', 'Erreur de connexion. Réessayez.'); }
   setBtnLoad('btn-send-code', false);
@@ -574,11 +590,35 @@ async function verifyCode() {
   setBtnLoad('btn-verify', false);
 }
 
+async function registerUser() {
+  const email = document.getElementById('login-email').value.trim();
+  const name  = document.getElementById('login-name').value.trim();
+  if (!name) return;
+  setLoginErr('login-error3', '');
+  setBtnLoad('btn-register', true, 'Création…');
+  try {
+    const res  = await fetch(AUTH_REQ, { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, name }) });
+    const data = await res.json();
+    if (res.ok && data.status === 'sent') {
+      document.getElementById('login-email-display').textContent = email;
+      document.getElementById('login-step-name').classList.add('hidden');
+      document.getElementById('login-step-code').classList.remove('hidden');
+      setTimeout(() => document.getElementById('login-code').focus(), 100);
+    } else {
+      setLoginErr('login-error3', data.error || 'Erreur lors de la création.');
+    }
+  } catch(e) { setLoginErr('login-error3', 'Erreur de connexion. Réessayez.'); }
+  setBtnLoad('btn-register', false);
+}
+
 function backToEmail() {
-  document.getElementById('login-step-code').classList.add('hidden');
+  ['login-step-code', 'login-step-name'].forEach(id =>
+    document.getElementById(id).classList.add('hidden'));
   document.getElementById('login-step-email').classList.remove('hidden');
   document.getElementById('login-code').value = '';
-  setLoginErr('login-error2', '');
+  ['login-error2', 'login-error3'].forEach(id => setLoginErr(id, ''));
 }
 
 function setLoginErr(id, msg) {
@@ -605,6 +645,7 @@ checkAuth();
 // Touche Entrée sur les inputs login
 window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('login-email').addEventListener('keydown', e => { if (e.key === 'Enter') sendCode(); });
+  document.getElementById('login-name').addEventListener('keydown',  e => { if (e.key === 'Enter') registerUser(); });
   document.getElementById('login-code').addEventListener('keydown',  e => { if (e.key === 'Enter') verifyCode(); });
   document.getElementById('login-code').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, ''); });
 });
