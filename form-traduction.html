@@ -387,6 +387,16 @@
     letter-spacing: 0.1em;
   }
 
+  .hidden { display: none !important; }
+
+  .login-tagline {
+    color: var(--text-dim);
+    font-size: 0.82rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+  .login-tagline strong { color: var(--gold); font-weight: 600; }
+
   .login-spinner {
     display: inline-block;
     width: 14px; height: 14px;
@@ -469,6 +479,10 @@
 <div id="login-overlay" class="login-overlay hidden">
   <div class="login-card">
     <div class="login-logo">🌐</div>
+    <p class="login-tagline">
+      Traduction instantanée <strong>FR · EN · RO</strong><br>
+      Dictée vocale, synthèse vocale et copie en un clic.
+    </p>
 
     <!-- Étape 1 : email -->
     <div id="login-step-email">
