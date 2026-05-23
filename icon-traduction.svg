@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Fond arrondi -->
+  <rect width="512" height="512" rx="100" fill="#0a0a0a"/>
+  <!-- Cercle décoratif subtil -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#D4AF37" stroke-width="6" opacity="0.15"/>
+
+  <!-- Bulle gauche (parole source) -->
+  <rect x="60" y="130" width="185" height="120" rx="22" fill="#D4AF37"/>
+  <polygon points="90,250 60,295 140,250" fill="#D4AF37"/>
+
+  <!-- Bulle droite (parole cible) -->
+  <rect x="267" y="262" width="185" height="120" rx="22" fill="#1a1a1a" stroke="#D4AF37" stroke-width="5"/>
+  <polygon points="372,262 422,217 422,262" fill="#1a1a1a" stroke="#D4AF37" stroke-width="5"/>
+
+  <!-- Flèche de traduction -->
+  <g transform="translate(256,256)" fill="#D4AF37">
+    <!-- Flèche gauche→droite -->
+    <path d="M-30,-18 L18,-18 L18,-28 L38,-8 L18,12 L18,2 L-30,2 Z" opacity="0.9"/>
+    <!-- Flèche droite→gauche -->
+    <path d="M30,22 L-18,22 L-18,32 L-38,12 L-18,-8 L-18,2 L30,2 Z" opacity="0.9" transform="translate(0,10)"/>
+  </g>
+
+  <!-- Texte FR -->
+  <text x="108" y="205" font-family="Arial, sans-serif" font-weight="800"
+        font-size="52" fill="#0a0a0a" text-anchor="middle">FR</text>
+
+  <!-- Texte RO -->
+  <text x="360" y="337" font-family="Arial, sans-serif" font-weight="800"
+        font-size="52" fill="#D4AF37" text-anchor="middle">RO</text>
+</svg>

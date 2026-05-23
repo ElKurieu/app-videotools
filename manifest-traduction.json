@@ -1,0 +1,31 @@
+{
+  "name": "Traduction FR · EN · RO",
+  "short_name": "Traduction",
+  "description": "Traduction instantanée Français / English / Română",
+  "start_url": "/app-videotools/form-traduction.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#D4AF37",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icon-traduction.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-traduction-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-traduction-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
