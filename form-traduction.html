@@ -583,6 +583,7 @@ async function verifyCode() {
         token: data.token, email: data.email, expiresAt: data.expiresAt
       }));
       hideLoginScreen();
+      trackSessionStart();
     } else {
       setLoginErr('login-error2', data.error || 'Code invalide ou expiré.');
     }
@@ -639,8 +640,49 @@ function setBtnLoad(id, loading, label) {
   }
 }
 
+// ── TRACKING UTILISATION ──
+const TRACK_URL  = 'https://n8n.srv1037761.hstgr.cloud/webhook/track-usage';
+let _trackStart  = null;
+
+function trackSessionStart() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return;
+    const auth = JSON.parse(raw);
+    if (!auth.email) return;
+    _trackStart = Date.now();
+    // Ping silencieux (fire & forget) — pas d'attente de réponse
+    fetch(TRACK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: auth.email, sessionMinutes: 0 })
+    }).catch(() => {});
+  } catch(e) {}
+}
+
+function trackSessionEnd() {
+  try {
+    if (!_trackStart) return;
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return;
+    const auth = JSON.parse(raw);
+    if (!auth.email) return;
+    const sessionMinutes = Math.round((Date.now() - _trackStart) / 60000 * 10) / 10;
+    // sendBeacon : fiable même lors de la fermeture de l'onglet
+    const blob = new Blob(
+      [JSON.stringify({ email: auth.email, sessionMinutes })],
+      { type: 'application/json' }
+    );
+    navigator.sendBeacon(TRACK_URL, blob);
+  } catch(e) {}
+}
+
+window.addEventListener('beforeunload', trackSessionEnd);
+
 // Vérif auth au chargement
 checkAuth();
+// Démarrer le tracking si déjà authentifié
+trackSessionStart();
 
 // Touche Entrée sur les inputs login
 window.addEventListener('DOMContentLoaded', () => {
