@@ -641,8 +641,9 @@ function setBtnLoad(id, loading, label) {
 }
 
 // ── TRACKING UTILISATION ──
-const TRACK_URL  = 'https://n8n.srv1037761.hstgr.cloud/webhook/track-usage';
-let _trackStart  = null;
+const TRACK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/track-usage';
+let _trackStart = null;
+let _trackSent  = false; // évite le double envoi
 
 function trackSessionStart() {
   try {
@@ -651,7 +652,7 @@ function trackSessionStart() {
     const auth = JSON.parse(raw);
     if (!auth.email) return;
     _trackStart = Date.now();
-    // Ping silencieux (fire & forget) — pas d'attente de réponse
+    _trackSent  = false;
     fetch(TRACK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -662,21 +663,28 @@ function trackSessionStart() {
 
 function trackSessionEnd() {
   try {
-    if (!_trackStart) return;
+    if (!_trackStart || _trackSent) return;
     const raw = localStorage.getItem(AUTH_KEY);
     if (!raw) return;
     const auth = JSON.parse(raw);
     if (!auth.email) return;
     const sessionMinutes = Math.round((Date.now() - _trackStart) / 60000 * 10) / 10;
-    // sendBeacon : fiable même lors de la fermeture de l'onglet
-    const blob = new Blob(
-      [JSON.stringify({ email: auth.email, sessionMinutes })],
-      { type: 'application/json' }
-    );
-    navigator.sendBeacon(TRACK_URL, blob);
+    if (sessionMinutes <= 0) return; // session trop courte, on ignore
+    _trackSent = true;
+    // fetch keepalive : fiable à la fermeture d'onglet, même sur Chrome/Edge/Firefox
+    fetch(TRACK_URL, {
+      method: 'POST',
+      keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: auth.email, sessionMinutes })
+    }).catch(() => {});
   } catch(e) {}
 }
 
+// visibilitychange (masquage onglet) + beforeunload (fermeture)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') trackSessionEnd();
+});
 window.addEventListener('beforeunload', trackSessionEnd);
 
 // Vérif auth au chargement
