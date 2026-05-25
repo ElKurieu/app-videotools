@@ -81,6 +81,39 @@
                text-align: center; transition: all .18s; }
   .voice-btn.sel { border-color: #7c3aed; background: #1e1030; color: #c4b5fd; font-weight: 600; }
   .voice-btn:hover:not(.sel) { border-color: #4a4a6a; color: #ccc; }
+
+  /* Chapitres — status box indépendante */
+  .chap-status { margin-top: 20px; padding: 16px; border-radius: 10px;
+                 background: #12121a; border: 1px solid #2a2a3a; display: none; }
+  .chap-status.show { display: block; }
+
+  /* Liste des chapitres */
+  .chap-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+  .chap-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px;
+               background: #12121a; border: 1px solid #2a2a3a; border-radius: 9px;
+               cursor: pointer; transition: border-color .2s; }
+  .chap-item:hover { border-color: #4a4a6a; }
+  .chap-item.selected { border-color: #7c3aed; background: #1a1030; }
+  .chap-item input[type=checkbox] { width: 16px; height: 16px; margin-top: 2px; cursor: pointer;
+                                     accent-color: #7c3aed; flex-shrink: 0; }
+  .chap-item-content { flex: 1; min-width: 0; }
+  .chap-title { font-size: .92rem; font-weight: 600; color: #e8e8f0; margin-bottom: 3px; }
+  .chap-preview { font-size: .78rem; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Boutons sélection */
+  .sel-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .sel-btn { flex: 1; padding: 8px; border: 1px solid #2a2a3a; border-radius: 7px;
+             background: transparent; color: #888; cursor: pointer; font-size: .82rem;
+             text-align: center; transition: all .18s; }
+  .sel-btn:hover { border-color: #4a4a6a; color: #ccc; }
+
+  /* Résultats vidéos chapitres */
+  .chap-videos { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .chap-video-item { background: #0d1f0d; border: 1px solid #1a4a1a; border-radius: 8px;
+                     padding: 12px 14px; }
+  .chap-video-item .titre { font-size: .8rem; color: #888; margin-bottom: 4px; }
+  .chap-video-item a { color: #4ade80; text-decoration: none; font-weight: 600; font-size: .92rem; }
+  .chap-video-item a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -92,6 +125,7 @@
   <div class="tabs">
     <button class="tab active" onclick="switchTab('text')">✏️ Texte direct</button>
     <button class="tab" onclick="switchTab('drive')">📁 Fichier Drive</button>
+    <button class="tab" onclick="switchTab('chapters')">📚 PDF Chapitres</button>
   </div>
 
   <!-- Onglet Texte -->
@@ -120,7 +154,70 @@
     </div>
   </div>
 
-  <!-- Paramètres communs -->
+  <!-- Onglet Chapitres -->
+  <div class="panel" id="panel-chapters">
+
+    <!-- Phase 1 : Formulaire de scan -->
+    <div id="chap-phase1">
+      <div class="field">
+        <label>ID ou URL du fichier Google Drive</label>
+        <input type="text" id="chap-drive" placeholder="1aBcDeFgHiJkLmNoPqRsTuVwXyZ ou URL Drive complète">
+        <p class="hint">PDF ou Word — le workflow détecte automatiquement les chapitres via GPT.</p>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Type de fichier</label>
+          <select id="chap-filetype">
+            <option value="pdf">PDF (.pdf)</option>
+            <option value="docx">Word (.docx)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Voix TTS</label>
+          <select id="chap-voix">
+            <option value="alloy">Alloy</option>
+            <option value="nova">Nova</option>
+            <option value="echo">Echo</option>
+            <option value="fable">Fable</option>
+            <option value="onyx">Onyx</option>
+            <option value="shimmer">Shimmer</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Email (optionnel)</label>
+        <input type="email" id="chap-email" placeholder="vous@example.com">
+      </div>
+      <button class="btn" id="chap-scan-btn" onclick="chapScan()">🔍 Analyser les chapitres</button>
+    </div>
+
+    <!-- Phase 2 : Sélection des chapitres (masqué jusqu'au scan) -->
+    <div id="chap-phase2" style="display:none">
+      <div style="border-top:1px solid #2a2a3a; margin: 20px 0;"></div>
+      <div class="field">
+        <label>Chapitres détectés (<span id="chap-count">0</span>)</label>
+        <div class="chap-list" id="chap-list"></div>
+        <div class="sel-btns">
+          <button class="sel-btn" onclick="chapSelectAll(true)">Tout sélectionner</button>
+          <button class="sel-btn" onclick="chapSelectAll(false)">Tout désélectionner</button>
+        </div>
+      </div>
+      <button class="btn" id="chap-process-btn" onclick="chapProcess()">🎬 Générer les vidéos (<span id="chap-sel-count">0</span> sélectionné(s))</button>
+    </div>
+
+    <!-- Status / résultats -->
+    <div class="chap-status" id="chap-status">
+      <div class="status-row">
+        <div class="spinner" id="chap-spinner"></div>
+        <div class="status-text" id="chap-status-text">...</div>
+      </div>
+      <div class="job-id" id="chap-job-display"></div>
+      <div id="chap-result-area"></div>
+    </div>
+  </div>
+
+  <!-- Paramètres communs (masqués sur onglet Chapitres) -->
+  <div id="common-params">
   <div class="field" style="margin-top:8px">
     <label>Voix OpenAI TTS</label>
     <div class="voice-grid" id="voice-grid">
@@ -139,6 +236,7 @@
   </div>
 
   <button class="btn" id="submit-btn" onclick="submitJob()">🚀 Générer la vidéo</button>
+  </div><!-- /common-params -->
 
   <div id="status">
     <div class="status-row">
@@ -161,9 +259,12 @@ let pollInterval  = null;
 
 function switchTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['text','drive'][i] === tab));
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['text','drive','chapters'][i] === tab));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
+  // Masquer les paramètres communs (voix/titre) sur l'onglet chapitres
+  const commonParams = document.getElementById('common-params');
+  if (commonParams) commonParams.style.display = tab === 'chapters' ? 'none' : 'block';
 }
 
 function selectVoice(v, el) {
@@ -235,7 +336,7 @@ function setStatus(msg, spinning, isError = false) {
 
 function startPolling(jobId) {
   let attempts = 0;
-  const maxAttempts = 60; // 2 minutes max
+  const maxAttempts = 300; // 10 minutes max
   pollInterval = setInterval(async () => {
     attempts++;
     if (attempts > maxAttempts) {
@@ -263,8 +364,9 @@ function startPolling(jobId) {
         <div class="error-box"><p>${row.errorMsg || 'Erreur inconnue'}</p></div>`;
       resetBtn();
     } else {
-      document.getElementById('status-text').textContent =
-        `En cours… (${attempts * 2}s)`;
+      const elapsed = attempts * 2;
+      const display = elapsed >= 60 ? `${Math.floor(elapsed/60)}min ${elapsed%60}s` : `${elapsed}s`;
+      document.getElementById('status-text').textContent = `En cours… (${display})`;
     }
   }, 2000);
 }
@@ -300,6 +402,288 @@ function resetBtn() {
   const btn = document.getElementById('submit-btn');
   btn.disabled = false;
   btn.textContent = '🚀 Générer la vidéo';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PDF CHAPITRES
+// ═══════════════════════════════════════════════════════════════
+const CHAP_SCAN_URL    = 'https://n8n.srv1037761.hstgr.cloud/webhook/tts-chapters-scan';
+const CHAP_PROCESS_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/tts-chapters-process';
+const CHAP_JOBS_TAB    = 'tts_chapters_jobs';
+const CHAP_VIDS_TAB    = 'tts_chapters_videos';
+
+let chapJobId        = null;
+let chapChapters     = [];
+let chapPollInterval = null;
+let chapPhase        = 'idle'; // idle | scanning | selecting | processing | done
+
+function chapSetStatus(msg, spinning, isError = false) {
+  const box = document.getElementById('chap-status');
+  box.classList.add('show');
+  document.getElementById('chap-status-text').textContent = msg;
+  document.getElementById('chap-spinner').style.display = spinning ? 'block' : 'none';
+  if (isError) document.getElementById('chap-spinner').style.display = 'none';
+}
+
+function chapClearResult() {
+  document.getElementById('chap-result-area').innerHTML = '';
+}
+
+async function chapScan() {
+  const raw    = document.getElementById('chap-drive').value.trim();
+  const ftype  = document.getElementById('chap-filetype').value;
+  const voix   = document.getElementById('chap-voix').value;
+  const email  = document.getElementById('chap-email').value.trim();
+  if (!raw) { alert('Merci de saisir l\'ID ou l\'URL du fichier Drive.'); return; }
+
+  const driveFileId = extractDriveId(raw);
+  const fileName    = 'document.' + ftype;
+  const scanBtn     = document.getElementById('chap-scan-btn');
+  scanBtn.disabled  = true;
+  scanBtn.textContent = '⏳ Analyse en cours...';
+
+  // Masquer la phase 2 (sélection) si on re-scan
+  document.getElementById('chap-phase2').style.display = 'none';
+  chapClearResult();
+  chapSetStatus('Analyse du document en cours... (30-90s)', true);
+  document.getElementById('chap-job-display').textContent = '';
+
+  try {
+    const res = await fetch(CHAP_SCAN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ driveFileId, fileName, voix, email })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + await res.text());
+    const data = await res.json();
+    chapJobId = data.jobId;
+    if (!chapJobId) throw new Error('jobId absent de la réponse');
+    document.getElementById('chap-job-display').textContent = 'Job : ' + chapJobId;
+    chapPhase = 'scanning';
+    chapStartScanPoll();
+  } catch(e) {
+    chapSetStatus('Erreur envoi : ' + e.message, false, true);
+    scanBtn.disabled = false;
+    scanBtn.textContent = '🔍 Analyser les chapitres';
+  }
+}
+
+function chapStartScanPoll() {
+  let attempts = 0;
+  const maxAttempts = 90; // 3 minutes max pour le scan
+  if (chapPollInterval) clearInterval(chapPollInterval);
+  chapPollInterval = setInterval(async () => {
+    attempts++;
+    if (attempts > maxAttempts) {
+      clearInterval(chapPollInterval);
+      chapSetStatus('Délai dépassé pour l\'analyse — vérifiez les logs n8n.', false, true);
+      document.getElementById('chap-scan-btn').disabled = false;
+      document.getElementById('chap-scan-btn').textContent = '🔍 Analyser les chapitres';
+      return;
+    }
+    const row = await chapGetJobRow(chapJobId);
+    if (!row) return;
+    const status = row.status || '';
+    if (status === 'ready') {
+      clearInterval(chapPollInterval);
+      chapSetStatus('✅ ' + (row.chaptersCount || '?') + ' chapitre(s) détecté(s) — sélectionnez ceux à traiter', false);
+      chapShowSelection(row.chapters);
+    } else if (status === 'error') {
+      clearInterval(chapPollInterval);
+      chapSetStatus('❌ Erreur analyse : ' + (row.errorMsg || 'inconnue'), false, true);
+      document.getElementById('chap-scan-btn').disabled = false;
+      document.getElementById('chap-scan-btn').textContent = '🔍 Analyser les chapitres';
+    } else {
+      const elapsed = attempts * 2;
+      const d = elapsed >= 60 ? Math.floor(elapsed/60) + 'min ' + (elapsed%60) + 's' : elapsed + 's';
+      chapSetStatus('Analyse du document en cours... (' + d + ')', true);
+    }
+  }, 2000);
+}
+
+function chapShowSelection(chaptersJsonOrArr) {
+  let chapters;
+  try {
+    chapters = typeof chaptersJsonOrArr === 'string' ? JSON.parse(chaptersJsonOrArr) : chaptersJsonOrArr;
+  } catch(e) { chapters = []; }
+  chapChapters = chapters;
+
+  const listEl = document.getElementById('chap-list');
+  listEl.innerHTML = '';
+  document.getElementById('chap-count').textContent = chapters.length;
+
+  chapters.forEach((c, i) => {
+    const item = document.createElement('div');
+    item.className = 'chap-item selected';
+    item.dataset.idx = i;
+    item.innerHTML =
+      '<input type="checkbox" checked id="chapck_' + i + '" onchange="chapUpdateSelCount()">' +
+      '<div class="chap-item-content">' +
+        '<div class="chap-title">' + escHtml(c.titre || 'Chapitre ' + i) + '</div>' +
+        '<div class="chap-preview">' + escHtml((c.preview || '').slice(0, 100)) + '</div>' +
+      '</div>';
+    item.onclick = function(e) {
+      if (e.target.tagName === 'INPUT') return;
+      const cb = document.getElementById('chapck_' + i);
+      cb.checked = !cb.checked;
+      item.classList.toggle('selected', cb.checked);
+      chapUpdateSelCount();
+    };
+    const cb = item.querySelector('input');
+    cb.onchange = function() {
+      item.classList.toggle('selected', cb.checked);
+      chapUpdateSelCount();
+    };
+    listEl.appendChild(item);
+  });
+
+  chapUpdateSelCount();
+  document.getElementById('chap-phase2').style.display = 'block';
+  document.getElementById('chap-scan-btn').disabled = false;
+  document.getElementById('chap-scan-btn').textContent = '🔍 Analyser à nouveau';
+}
+
+function chapUpdateSelCount() {
+  const checked = document.querySelectorAll('#chap-list input[type=checkbox]:checked').length;
+  document.getElementById('chap-sel-count').textContent = checked;
+  document.getElementById('chap-process-btn').disabled = checked === 0;
+}
+
+function chapSelectAll(val) {
+  document.querySelectorAll('#chap-list input[type=checkbox]').forEach((cb, i) => {
+    cb.checked = val;
+    const item = cb.closest('.chap-item');
+    if (item) item.classList.toggle('selected', val);
+  });
+  chapUpdateSelCount();
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function chapProcess() {
+  const selectedIds = [];
+  document.querySelectorAll('#chap-list input[type=checkbox]:checked').forEach((cb, i) => {
+    const idx = parseInt(cb.id.replace('chapck_',''));
+    if (!isNaN(idx) && chapChapters[idx]) selectedIds.push(chapChapters[idx].id);
+  });
+  if (!selectedIds.length) { alert('Sélectionnez au moins un chapitre.'); return; }
+
+  const voix = document.getElementById('chap-voix').value;
+  const btn  = document.getElementById('chap-process-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Lancement...';
+  chapClearResult();
+  chapSetStatus('Démarrage de la génération de ' + selectedIds.length + ' vidéo(s)...', true);
+  chapPhase = 'processing';
+
+  try {
+    const res = await fetch(CHAP_PROCESS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: chapJobId, selectedChapterIds: selectedIds, voix })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + await res.text());
+    chapStartProcessPoll(selectedIds.length);
+  } catch(e) {
+    chapSetStatus('Erreur envoi : ' + e.message, false, true);
+    btn.disabled = false;
+    btn.innerHTML = '🎬 Générer les vidéos (<span id="chap-sel-count">' + selectedIds.length + '</span> sélectionné(s))';
+  }
+}
+
+function chapStartProcessPoll(totalChapters) {
+  let attempts = 0;
+  const maxAttempts = 1800; // 60 minutes max (chaque chapitre ~2-5min)
+  if (chapPollInterval) clearInterval(chapPollInterval);
+  chapPollInterval = setInterval(async () => {
+    attempts++;
+    if (attempts > maxAttempts) {
+      clearInterval(chapPollInterval);
+      chapSetStatus('Délai dépassé. Certaines vidéos sont peut-être disponibles dans Drive.', false, true);
+      return;
+    }
+    const row = await chapGetJobRow(chapJobId);
+    if (!row) return;
+    const status = row.status || '';
+    if (status === 'done') {
+      clearInterval(chapPollInterval);
+      chapSetStatus('✅ ' + totalChapters + ' vidéo(s) générée(s) avec succès !', false);
+      await chapLoadVideos();
+    } else if (status === 'error') {
+      clearInterval(chapPollInterval);
+      chapSetStatus('❌ Erreur : ' + (row.errorMsg || 'inconnue'), false, true);
+    } else {
+      const elapsed = attempts * 2;
+      const d = elapsed >= 60 ? Math.floor(elapsed/60) + 'min ' + (elapsed%60) + 's' : elapsed + 's';
+      chapSetStatus('Génération en cours... ' + totalChapters + ' vidéo(s) (' + d + ')', true);
+    }
+  }, 2000);
+}
+
+async function chapLoadVideos() {
+  try {
+    const url  = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(CHAP_VIDS_TAB) + '&t=' + Date.now();
+    const res  = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
+    const rows = json.table?.rows || [];
+    const cols = json.table?.cols?.map(c => c.label.toLowerCase()) || [];
+    const iPid   = cols.indexOf('parentjobid');
+    const iTitre = cols.indexOf('titre');
+    const iDrive = cols.indexOf('driveurl');
+    const videos = [];
+    for (const row of rows) {
+      const c = row.c || [];
+      if ((c[iPid]?.v || '') === chapJobId) {
+        videos.push({ titre: c[iTitre]?.v || '?', driveUrl: c[iDrive]?.v || '' });
+      }
+    }
+    if (!videos.length) {
+      document.getElementById('chap-result-area').innerHTML = '<div class="hint" style="margin-top:8px">Aucun lien trouvé — cherchez dans Google Drive.</div>';
+      return;
+    }
+    const html = '<div class="chap-videos">' +
+      videos.map(v =>
+        '<div class="chap-video-item">' +
+          '<div class="titre">' + escHtml(v.titre) + '</div>' +
+          (v.driveUrl ? '<a href="' + escHtml(v.driveUrl) + '" target="_blank">🎬 Ouvrir la vidéo</a>' : '<span style="color:#666">Lien non disponible</span>') +
+        '</div>'
+      ).join('') +
+    '</div>';
+    document.getElementById('chap-result-area').innerHTML = html;
+  } catch(e) {
+    document.getElementById('chap-result-area').innerHTML = '<div class="hint" style="color:#f87171;margin-top:8px">Erreur chargement liens : ' + escHtml(e.message) + '</div>';
+  }
+}
+
+async function chapGetJobRow(jobId) {
+  try {
+    const url  = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:json&sheet=' + encodeURIComponent(CHAP_JOBS_TAB) + '&t=' + Date.now();
+    const res  = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
+    const rows = json.table?.rows || [];
+    const cols = json.table?.cols?.map(c => c.label.toLowerCase()) || [];
+    const iJobId  = cols.indexOf('jobid');
+    const iStatus = cols.indexOf('status');
+    const iCount  = cols.indexOf('chapterscount');
+    const iChaps  = cols.indexOf('chapters');
+    const iErr    = cols.indexOf('errormsg');
+    for (const row of rows) {
+      const c = row.c || [];
+      if ((c[iJobId]?.v || '') === jobId) {
+        return {
+          status:       c[iStatus]?.v || '',
+          chaptersCount:c[iCount]?.v  || '',
+          chapters:     c[iChaps]?.v  || '[]',
+          errorMsg:     c[iErr]?.v    || ''
+        };
+      }
+    }
+  } catch(e) { /* ignore */ }
+  return null;
 }
 </script>
 </body>
