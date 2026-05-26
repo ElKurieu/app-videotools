@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Video Clean Audio</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #e8e8e8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 560px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .logo-text h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+
+    .logo-text p {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #aaa;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input[type="text"], input[type="email"], input[type="range"] {
+      width: 100%;
+      padding: 12px 16px;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #f0f0f0;
+      font-size: 15px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input[type="text"]:focus, input[type="email"]:focus {
+      border-color: #7c3aed;
+    }
+
+    input[type="text"]::placeholder, input[type="email"]::placeholder {
+      color: #444;
+    }
+
+    .threshold-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      flex: 1;
+      height: 6px;
+      cursor: pointer;
+      accent-color: #7c3aed;
+      background: transparent;
+    }
+
+    .threshold-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #7c3aed;
+      min-width: 36px;
+      text-align: right;
+    }
+
+    .threshold-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #555;
+      margin-top: 6px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #555;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 8px;
+    }
+
+    .btn:hover { opacity: 0.9; }
+    .btn:active { transform: scale(0.99); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Status area */
+    #status-area {
+      display: none;
+      margin-top: 24px;
+      padding: 20px;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+    }
+
+    #status-area.visible { display: block; }
+
+    .status-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #333;
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f0f0f0;
+    }
+
+    .status-msg {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.6;
+    }
+
+    .job-id {
+      font-size: 11px;
+      color: #555;
+      margin-top: 8px;
+      font-family: monospace;
+    }
+
+    /* Done state */
+    .done-icon {
+      width: 20px;
+      height: 20px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .error-icon {
+      width: 20px;
+      height: 20px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .result-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border-radius: 8px;
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+
+    .result-link:hover { opacity: 0.85; }
+
+    .stats-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: #0d0d0d;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #666;
+      font-family: monospace;
+      line-height: 1.8;
+    }
+
+    .new-btn {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 13px;
+      color: #7c3aed;
+      cursor: pointer;
+      text-decoration: underline;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    /* Info tag */
+    .info-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #555;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #222;
+    }
+
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🎧</div>
+    <div class="logo-text">
+      <h1>Clean Audio</h1>
+      <p>Suppression des rires et bruits parasites</p>
+    </div>
+  </div>
+
+  <form id="cleanForm">
+    <div class="form-group">
+      <label>URL Google Drive de la vidéo</label>
+      <input type="text" id="driveUrl" placeholder="https://drive.google.com/file/d/..." required>
+      <div class="hint">Partage Drive (lecture) ou lien direct. Formats supportés : MP4, MOV, AVI…</div>
+    </div>
+
+    <div class="form-group">
+      <label>Votre email</label>
+      <input type="email" id="email" placeholder="vous@exemple.com" required>
+      <div class="hint">La vidéo nettoyée sera partagée sur votre Drive et accessible via ce lien.</div>
+    </div>
+
+    <div class="form-group">
+      <label>Sensibilité de détection</label>
+      <div class="threshold-row">
+        <input type="range" id="threshold" min="0.1" max="0.7" step="0.05" value="0.3">
+        <span class="threshold-value" id="thresholdVal">0.30</span>
+      </div>
+      <div class="threshold-labels">
+        <span>Sensible (0.1)</span>
+        <span>Standard (0.3)</span>
+        <span>Strict (0.7)</span>
+      </div>
+      <div class="hint">Valeur plus basse = détecte plus de segments. Recommandé : 0.30.</div>
+    </div>
+
+    <button type="submit" class="btn" id="submitBtn">
+      🧹 Nettoyer la vidéo
+    </button>
+  </form>
+
+  <div id="status-area">
+    <!-- Contenu injecté dynamiquement -->
+  </div>
+
+  <div class="info-tag">
+    <span class="dot"></span>
+    Traitement VPS · noisereduce + scipy · résultat sur Google Drive
+  </div>
+</div>
+
+<script>
+  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/clean-video';
+  const GSHEET_ID   = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
+  const SHEET_NAME  = 'clean_jobs';
+  const POLL_INTERVAL = 8000; // ms
+
+  let pollTimer = null;
+  let currentJobId = null;
+
+  // Slider threshold
+  const slider = document.getElementById('threshold');
+  const valDisplay = document.getElementById('thresholdVal');
+  slider.addEventListener('input', () => {
+    valDisplay.textContent = parseFloat(slider.value).toFixed(2);
+  });
+
+  // Form submit
+  document.getElementById('cleanForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const driveUrl  = document.getElementById('driveUrl').value.trim();
+    const email     = document.getElementById('email').value.trim();
+    const threshold = slider.value;
+
+    if (!driveUrl || !email) return;
+
+    setLoading(true);
+    showStatus('pending', null);
+
+    try {
+      const resp = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ driveUrl, email, threshold })
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok || !data.jobId) {
+        throw new Error(data.error || 'Erreur lors de l\'envoi');
+      }
+
+      currentJobId = data.jobId;
+      showStatus('polling', data.jobId);
+      startPolling(data.jobId, email);
+
+    } catch (err) {
+      showStatus('error', null, err.message);
+      setLoading(false);
+    }
+  });
+
+  function setLoading(on) {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = on;
+    btn.textContent = on ? '⏳ Envoi en cours...' : '🧹 Nettoyer la vidéo';
+  }
+
+  function showStatus(state, jobId, extra) {
+    const area = document.getElementById('status-area');
+    area.className = 'visible';
+
+    if (state === 'pending') {
+      area.innerHTML = `
+        <div class="status-header">
+          <div class="spinner"></div>
+          <div class="status-title">Envoi de la vidéo…</div>
+        </div>
+        <div class="status-msg">Connexion au serveur en cours.</div>
+      `;
+    } else if (state === 'polling') {
+      area.innerHTML = `
+        <div class="status-header">
+          <div class="spinner"></div>
+          <div class="status-title">Nettoyage en cours…</div>
+        </div>
+        <div class="status-msg">
+          Extraction audio · Débruitage (noisereduce) · Détection parasites · Recomposition.<br>
+          Durée estimée : 1–5 min selon la longueur.
+        </div>
+        <div class="job-id">ID : ${jobId}</div>
+      `;
+    } else if (state === 'done') {
+      const shareUrl = extra.shareUrl || '';
+      const statsHtml = extra.stats ? `
+        <div class="stats-box">
+          Segments supprimés : ${extra.stats.segments_removed ?? '?'}<br>
+          Taille entrée : ${extra.stats.size_in_kb ?? '?'} KB<br>
+          Taille sortie : ${extra.stats.size_out_kb ?? '?'} KB
+        </div>` : '';
+
+      area.innerHTML = `
+        <div class="status-header">
+          <div class="done-icon">✓</div>
+          <div class="status-title">Vidéo nettoyée !</div>
+        </div>
+        <div class="status-msg">Votre vidéo est prête. Partagée avec votre compte Drive.</div>
+        ${statsHtml}
+        <a class="result-link" href="${shareUrl}" target="_blank">
+          ▶ Ouvrir sur Google Drive
+        </a>
+        <br>
+        <button class="new-btn" onclick="resetForm()">Nettoyer une autre vidéo</button>
+      `;
+    } else if (state === 'error') {
+      area.innerHTML = `
+        <div class="status-header">
+          <div class="error-icon">✕</div>
+          <div class="status-title">Erreur</div>
+        </div>
+        <div class="status-msg">${extra || 'Une erreur est survenue.'}</div>
+        <button class="new-btn" onclick="resetForm()">Réessayer</button>
+      `;
+    }
+  }
+
+  function startPolling(jobId, email) {
+    clearInterval(pollTimer);
+    pollTimer = setInterval(() => pollStatus(jobId, email), POLL_INTERVAL);
+  }
+
+  async function pollStatus(jobId, email) {
+    try {
+      // Lire GSheet via l'API publique de lecture CSV
+      const url = `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+      const resp = await fetch(url);
+      if (!resp.ok) return;
+
+      const csv = await resp.text();
+      const rows = parseCSV(csv);
+
+      // Trouver la ligne du job
+      const row = rows.find(r => r[0] === jobId);
+      if (!row) return;
+
+      const status   = row[4] || '';
+      const shareUrl = row[5] || '';
+      const errorMsg = row[6] || '';
+
+      if (status === 'done') {
+        clearInterval(pollTimer);
+        setLoading(false);
+        showStatus('done', jobId, { shareUrl });
+      } else if (status === 'error') {
+        clearInterval(pollTimer);
+        setLoading(false);
+        showStatus('error', null, errorMsg || 'Erreur de traitement côté serveur.');
+      }
+      // sinon on continue à poller
+    } catch (e) {
+      // silencieux
+    }
+  }
+
+  function parseCSV(text) {
+    const lines = text.trim().split('\n');
+    return lines.slice(1).map(line => {
+      const cols = [];
+      let inQuote = false, cur = '';
+      for (let i = 0; i < line.length; i++) {
+        const c = line[i];
+        if (c === '"') { inQuote = !inQuote; }
+        else if (c === ',' && !inQuote) { cols.push(cur.trim()); cur = ''; }
+        else { cur += c; }
+      }
+      cols.push(cur.trim());
+      return cols;
+    });
+  }
+
+  function resetForm() {
+    clearInterval(pollTimer);
+    currentJobId = null;
+    document.getElementById('status-area').className = '';
+    document.getElementById('cleanForm').reset();
+    valDisplay.textContent = '0.30';
+    setLoading(false);
+  }
+</script>
+
+</body>
+</html>
