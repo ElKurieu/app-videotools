@@ -241,12 +241,12 @@
 
     <div class="field">
       <label>Titre du chapitre à assembler</label>
-      <input type="text" id="concat-chapter-title" placeholder="CHAPITRE_II"
-             oninput="concatUpdateOutputName()" style="text-transform:uppercase">
+      <input type="text" id="concat-chapter-title" placeholder="CHAPITRE_II ou CHAPITRE_II_P1_1779796170772.mp4"
+             oninput="concatUpdateOutputName()">
       <p class="hint">
-        Préfixe exact des fichiers dans Drive.<br>
-        Ex : <strong>CHAPITRE_II</strong> pour les fichiers <code>CHAPITRE_II_P1_xxx.mp4</code>, <code>CHAPITRE_II_P2_xxx.mp4</code>…
+        Tape le préfixe (<strong>CHAPITRE_II</strong>) ou colle directement le nom d'un fichier partie (<code>CHAPITRE_II_P1_xxx.mp4</code>) — le préfixe est extrait automatiquement.
       </p>
+      <p class="concat-extracted-hint" style="font-size:.78rem; color:#a78bfa; margin-top:4px; font-weight:600;"></p>
     </div>
 
     <div class="field">
@@ -473,9 +473,29 @@ function resetBtn() {
 // ASSEMBLER — concaténation des parties d'un chapitre
 // ═══════════════════════════════════════════════════════════════
 
+function concatExtractPrefix(raw) {
+  // Si l'utilisateur colle un nom de fichier complet (ex: CHAPITRE_II_P1_1779796170772.mp4)
+  // → extrait automatiquement le préfixe avant _P<N>_
+  const upper = raw.trim().toUpperCase().replace(/\.MP4$/i, '');
+  const m = upper.match(/^(.+?)_P\d+_/);
+  return m ? m[1] : upper;
+}
+
 function concatUpdateOutputName() {
-  const title = document.getElementById('concat-chapter-title').value.trim().toUpperCase();
+  const raw   = document.getElementById('concat-chapter-title').value;
+  const title = concatExtractPrefix(raw);
+  const field = document.getElementById('concat-chapter-title');
   const out   = document.getElementById('concat-output-name');
+
+  // Afficher le préfixe extrait sous le champ si différent de ce qui a été tapé
+  const extracted = raw.trim().toUpperCase().replace(/\.MP4$/i, '');
+  const hint = field.parentElement.querySelector('.concat-extracted-hint');
+  if (title && title !== extracted && !extracted.match(/^(.+?)_P\d+_/) === false) {
+    if (hint) hint.textContent = '→ Préfixe détecté : ' + title;
+  } else if (hint) {
+    hint.textContent = '';
+  }
+
   if (title && !out.dataset.userEdited) {
     out.placeholder = title + '_COMPLET.mp4';
   }
@@ -487,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function concatChapter() {
-  const rawTitle   = document.getElementById('concat-chapter-title').value.trim().toUpperCase();
+  const rawTitle   = concatExtractPrefix(document.getElementById('concat-chapter-title').value);
   const outputName = document.getElementById('concat-output-name').value.trim();
   if (!rawTitle) { alert('Merci de saisir le titre du chapitre (ex: CHAPITRE_II).'); return; }
 
