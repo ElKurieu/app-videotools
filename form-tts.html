@@ -16,10 +16,10 @@
           max-width: 640px; margin: 0 auto; padding: 28px; }
 
   /* Tabs */
-  .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
-  .tab { flex: 1; padding: 10px; border: 1px solid #2a2a3a; border-radius: 8px;
-         background: transparent; color: #888; cursor: pointer; font-size: .9rem;
-         transition: all .2s; text-align: center; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 24px; flex-wrap: wrap; }
+  .tab { flex: 1; min-width: 0; padding: 9px 6px; border: 1px solid #2a2a3a; border-radius: 8px;
+         background: transparent; color: #888; cursor: pointer; font-size: .82rem;
+         transition: all .2s; text-align: center; white-space: nowrap; }
   .tab.active { background: #6d28d9; border-color: #7c3aed; color: #fff; font-weight: 600; }
   .tab:hover:not(.active) { border-color: #4a4a6a; color: #ccc; }
 
@@ -52,6 +52,9 @@
          margin-top: 4px; letter-spacing: .02em; }
   .btn:hover:not(:disabled) { opacity: .85; }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* Bouton vert pour assembler */
+  .btn-green { background: linear-gradient(135deg, #059669, #0284c7); }
 
   /* Status */
   #status { margin-top: 24px; padding: 16px; border-radius: 10px;
@@ -114,6 +117,20 @@
   .chap-video-item .titre { font-size: .8rem; color: #888; margin-bottom: 4px; }
   .chap-video-item a { color: #4ade80; text-decoration: none; font-weight: 600; font-size: .92rem; }
   .chap-video-item a:hover { text-decoration: underline; }
+
+  /* Concat status */
+  #concat-status { margin-top: 20px; padding: 16px; border-radius: 10px;
+                   background: #12121a; border: 1px solid #2a2a3a; }
+  .info-box { background: #0d1520; border: 1px solid #1a3a4a;
+              border-radius: 8px; padding: 14px; margin-top: 10px; }
+  .info-box p { color: #7dd3fc; font-size: .88rem; line-height: 1.5; }
+  .info-box a { color: #38bdf8; font-weight: 600; }
+  .info-box a:hover { text-decoration: underline; }
+
+  /* Séparateur section */
+  .section-sep { border-top: 1px solid #2a2a3a; margin: 20px 0; }
+  .section-label { font-size: .75rem; color: #555; text-transform: uppercase;
+                   letter-spacing: .06em; margin-bottom: 14px; }
 </style>
 </head>
 <body>
@@ -123,9 +140,10 @@
 
 <div class="card">
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('text')">✏️ Texte direct</button>
-    <button class="tab" onclick="switchTab('drive')">📁 Fichier Drive</button>
-    <button class="tab" onclick="switchTab('chapters')">📚 PDF Chapitres</button>
+    <button class="tab active" onclick="switchTab('text')">✏️ Texte</button>
+    <button class="tab" onclick="switchTab('drive')">📁 Drive</button>
+    <button class="tab" onclick="switchTab('chapters')">📚 Chapitres</button>
+    <button class="tab" onclick="switchTab('concat')">🔗 Assembler</button>
   </div>
 
   <!-- Onglet Texte -->
@@ -216,7 +234,49 @@
     </div>
   </div>
 
-  <!-- Paramètres communs (masqués sur onglet Chapitres) -->
+  <!-- ═══════════════════════════════════════════════════════
+       Onglet Assembler — concatène les parties d'un chapitre
+       ═══════════════════════════════════════════════════════ -->
+  <div class="panel" id="panel-concat">
+
+    <div class="field">
+      <label>Titre du chapitre à assembler</label>
+      <input type="text" id="concat-chapter-title" placeholder="CHAPITRE_II"
+             oninput="concatUpdateOutputName()" style="text-transform:uppercase">
+      <p class="hint">
+        Préfixe exact des fichiers dans Drive.<br>
+        Ex : <strong>CHAPITRE_II</strong> pour les fichiers <code>CHAPITRE_II_P1_xxx.mp4</code>, <code>CHAPITRE_II_P2_xxx.mp4</code>…
+      </p>
+    </div>
+
+    <div class="field">
+      <label>Nom de la vidéo finale</label>
+      <input type="text" id="concat-output-name" placeholder="CHAPITRE_II_COMPLET.mp4">
+      <p class="hint">Laissez vide pour utiliser le titre + "_COMPLET.mp4" automatiquement.</p>
+    </div>
+
+    <button class="btn btn-green" id="concat-btn" onclick="concatChapter()">🔗 Assembler les parties</button>
+
+    <div id="concat-status" style="display:none; margin-top:20px; padding:16px; border-radius:10px; background:#12121a; border:1px solid #2a2a3a;">
+      <div class="status-row">
+        <div class="spinner" id="concat-spinner" style="display:none; border-top-color:#059669;"></div>
+        <div class="status-text" id="concat-status-text">...</div>
+      </div>
+      <div id="concat-result-area"></div>
+    </div>
+
+    <div class="section-sep" style="margin-top:28px;"></div>
+    <p class="section-label">Comment ça marche</p>
+    <div style="font-size:.82rem; color:#666; line-height:1.6;">
+      1. Génère d'abord toutes les parties via l'onglet <strong style="color:#a0a0b8">📚 Chapitres</strong><br>
+      2. Reviens ici, saisis le titre du chapitre (ex: <code>CHAPITRE_II</code>)<br>
+      3. Clique sur <strong style="color:#a0a0b8">Assembler</strong> — les parties P1, P2… sont fusionnées en une seule vidéo<br>
+      4. La vidéo finale apparaît dans ton Drive (dossier Short3m) en 2–4 minutes
+    </div>
+
+  </div>
+
+  <!-- Paramètres communs (masqués sur onglets Chapitres et Assembler) -->
   <div id="common-params">
   <div class="field" style="margin-top:8px">
     <label>Voix OpenAI TTS</label>
@@ -249,22 +309,27 @@
 </div>
 
 <script>
-const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/tts-imagevideo';
-const SHEET_ID    = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
-const SHEET_TAB   = 'tts_jobs';
+const WEBHOOK_URL  = 'https://n8n.srv1037761.hstgr.cloud/webhook/tts-imagevideo';
+const SHEET_ID     = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
+const SHEET_TAB    = 'tts_jobs';
+const CONCAT_URL   = 'https://n8n.srv1037761.hstgr.cloud/webhook/tts-concat-chapter';
+const DRIVE_FOLDER = 'https://drive.google.com/drive/folders/1eknizh8mO63N-0aP2nFjbGm0pOJU-n6Y';
 
-let currentTab  = 'text';
+let currentTab    = 'text';
 let selectedVoice = 'alloy';
 let pollInterval  = null;
 
 function switchTab(tab) {
   currentTab = tab;
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['text','drive','chapters'][i] === tab));
+  const tabs = ['text','drive','chapters','concat'];
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', tabs[i] === tab));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + tab).classList.add('active');
-  // Masquer les paramètres communs (voix/titre) sur l'onglet chapitres
+  // Masquer les paramètres communs (voix/titre) sur les onglets chapitres et assembler
   const commonParams = document.getElementById('common-params');
-  if (commonParams) commonParams.style.display = tab === 'chapters' ? 'none' : 'block';
+  const statusBox    = document.getElementById('status');
+  if (commonParams) commonParams.style.display = (tab === 'chapters' || tab === 'concat') ? 'none' : 'block';
+  if (statusBox && tab === 'concat') statusBox.style.display = 'none';
 }
 
 function selectVoice(v, el) {
@@ -336,7 +401,7 @@ function setStatus(msg, spinning, isError = false) {
 
 function startPolling(jobId) {
   let attempts = 0;
-  const maxAttempts = 300; // 10 minutes max
+  const maxAttempts = 300;
   pollInterval = setInterval(async () => {
     attempts++;
     if (attempts > maxAttempts) {
@@ -379,7 +444,7 @@ async function getJobRow(jobId) {
     const json = JSON.parse(text.replace(/^[^(]+\(/, '').replace(/\);?\s*$/, ''));
     const rows = json.table?.rows || [];
     const cols = json.table?.cols?.map(c => c.label.toLowerCase()) || [];
-    const iJobId = cols.indexOf('jobid');
+    const iJobId  = cols.indexOf('jobid');
     const iStatus = cols.indexOf('status');
     const iDrive  = cols.indexOf('driveurl');
     const iErr    = cols.indexOf('errormsg');
@@ -405,6 +470,68 @@ function resetBtn() {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// ASSEMBLER — concaténation des parties d'un chapitre
+// ═══════════════════════════════════════════════════════════════
+
+function concatUpdateOutputName() {
+  const title = document.getElementById('concat-chapter-title').value.trim().toUpperCase();
+  const out   = document.getElementById('concat-output-name');
+  if (title && !out.dataset.userEdited) {
+    out.placeholder = title + '_COMPLET.mp4';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const out = document.getElementById('concat-output-name');
+  if (out) out.addEventListener('input', () => { out.dataset.userEdited = out.value ? '1' : ''; });
+});
+
+async function concatChapter() {
+  const rawTitle   = document.getElementById('concat-chapter-title').value.trim().toUpperCase();
+  const outputName = document.getElementById('concat-output-name').value.trim();
+  if (!rawTitle) { alert('Merci de saisir le titre du chapitre (ex: CHAPITRE_II).'); return; }
+
+  const btn = document.getElementById('concat-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Assemblage en cours...';
+  concatSetStatus('Envoi de la requête d\'assemblage...', true);
+
+  const payload = { chapterTitle: rawTitle };
+  if (outputName) payload.outputName = outputName;
+
+  try {
+    const res = await fetch(CONCAT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' : ' + await res.text());
+    const data = await res.json();
+
+    concatSetStatus('✅ Assemblage lancé ! La vidéo sera prête dans Drive dans 2–4 minutes.', false);
+    document.getElementById('concat-result-area').innerHTML =
+      '<div class="info-box" style="margin-top:10px">' +
+        '<p>📁 La vidéo <strong>' + escHtml(outputName || rawTitle + '_COMPLET.mp4') + '</strong> apparaîtra dans ton dossier <strong>Short3m</strong> sur Drive.<br><br>' +
+        '<a href="' + DRIVE_FOLDER + '" target="_blank">🔗 Ouvrir le dossier Short3m</a></p>' +
+      '</div>';
+
+    btn.disabled = false;
+    btn.textContent = '🔗 Assembler les parties';
+  } catch(e) {
+    concatSetStatus('❌ Erreur : ' + e.message, false);
+    btn.disabled = false;
+    btn.textContent = '🔗 Assembler les parties';
+  }
+}
+
+function concatSetStatus(msg, spinning) {
+  const box = document.getElementById('concat-status');
+  box.style.display = 'block';
+  document.getElementById('concat-status-text').textContent = msg;
+  document.getElementById('concat-spinner').style.display = spinning ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
 // PDF CHAPITRES
 // ═══════════════════════════════════════════════════════════════
 const CHAP_SCAN_URL    = 'https://n8n.srv1037761.hstgr.cloud/webhook/tts-chapters-scan';
@@ -415,7 +542,7 @@ const CHAP_VIDS_TAB    = 'tts_chapters_videos';
 let chapJobId        = null;
 let chapChapters     = [];
 let chapPollInterval = null;
-let chapPhase        = 'idle'; // idle | scanning | selecting | processing | done
+let chapPhase        = 'idle';
 
 function chapSetStatus(msg, spinning, isError = false) {
   const box = document.getElementById('chap-status');
@@ -442,7 +569,6 @@ async function chapScan() {
   scanBtn.disabled  = true;
   scanBtn.textContent = '⏳ Analyse en cours...';
 
-  // Masquer la phase 2 (sélection) si on re-scan
   document.getElementById('chap-phase2').style.display = 'none';
   chapClearResult();
   chapSetStatus('Analyse du document en cours... (30-90s)', true);
@@ -470,7 +596,7 @@ async function chapScan() {
 
 function chapStartScanPoll() {
   let attempts = 0;
-  const maxAttempts = 90; // 3 minutes max pour le scan
+  const maxAttempts = 90;
   if (chapPollInterval) clearInterval(chapPollInterval);
   chapPollInterval = setInterval(async () => {
     attempts++;
@@ -564,7 +690,7 @@ function escHtml(str) {
 
 async function chapProcess() {
   const selectedIds = [];
-  document.querySelectorAll('#chap-list input[type=checkbox]:checked').forEach((cb, i) => {
+  document.querySelectorAll('#chap-list input[type=checkbox]:checked').forEach((cb) => {
     const idx = parseInt(cb.id.replace('chapck_',''));
     if (!isNaN(idx) && chapChapters[idx]) selectedIds.push(chapChapters[idx].id);
   });
@@ -595,7 +721,7 @@ async function chapProcess() {
 
 function chapStartProcessPoll(totalChapters) {
   let attempts = 0;
-  const maxAttempts = 1800; // 60 minutes max (chaque chapitre ~2-5min)
+  const maxAttempts = 1800;
   if (chapPollInterval) clearInterval(chapPollInterval);
   chapPollInterval = setInterval(async () => {
     attempts++;
@@ -675,10 +801,10 @@ async function chapGetJobRow(jobId) {
       const c = row.c || [];
       if ((c[iJobId]?.v || '') === jobId) {
         return {
-          status:       c[iStatus]?.v || '',
-          chaptersCount:c[iCount]?.v  || '',
-          chapters:     c[iChaps]?.v  || '[]',
-          errorMsg:     c[iErr]?.v    || ''
+          status:        c[iStatus]?.v || '',
+          chaptersCount: c[iCount]?.v  || '',
+          chapters:      c[iChaps]?.v  || '[]',
+          errorMsg:      c[iErr]?.v    || ''
         };
       }
     }
