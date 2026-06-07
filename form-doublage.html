@@ -86,6 +86,11 @@
       background: #1a1500;
       color: #D4AF37;
     }
+    .tab.locked {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
 
     /* PANELS */
     .panel { display: none; }
@@ -224,6 +229,27 @@
     .toggle-switch input:checked + .toggle-track::before {
       transform: translateX(18px); background: #f0ede4;
     }
+
+    /* VOIX CLONEE */
+    .toggle-row.vc-active {
+      border-color: #4a6a9a;
+      background: #080c14;
+    }
+    .toggle-row.vc-active .toggle-switch input:checked + .toggle-track {
+      background: #1e3a6a;
+    }
+    .vc-note {
+      background: #080c14;
+      border: 1px solid #1e2e4a;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #93c5fd;
+      margin-bottom: 20px;
+      line-height: 1.7;
+      display: none;
+    }
+    .vc-note strong { display: block; margin-bottom: 4px; font-size: 13px; }
 
     /* SUBMIT */
     .btn-submit {
@@ -442,7 +468,8 @@
       </div>
     </div>
 
-    <div class="field">
+    <!-- VOIX (cachée en mode Voix Clonée) -->
+    <div class="field" id="voix-field">
       <label>Voix <span style="color:#555; font-weight:400;">(optionnel — nova par défaut)</span></label>
       <div class="select-wrapper">
         <select id="voix">
@@ -456,7 +483,28 @@
       </div>
     </div>
 
-    <!-- TOGGLE VITESSE -->
+    <!-- TOGGLE VOIX CLONEE -->
+    <label class="toggle-row" id="vcToggleRow" for="toggleVoixClonee">
+      <div class="toggle-info">
+        <span class="toggle-label">🎤 Voix Clonée</span>
+        <span class="toggle-desc" id="vcToggleDesc">
+          <span class="badge badge-off">OFF</span> utilise une voix OpenAI standard
+        </span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="toggleVoixClonee" onchange="onToggleVoixClonee(this)" />
+        <span class="toggle-track"></span>
+      </div>
+    </label>
+
+    <!-- NOTE VOIX CLONEE (visible uniquement quand activé) -->
+    <div class="vc-note" id="vc-note">
+      <strong>🎤 Mode Voix Clonée activé</strong>
+      Traitement via le modèle vocal personnalisé — résultat livré par <strong>Telegram</strong>.<br>
+      <span style="color:#6b8ec5;">Source : Google Drive uniquement · Langues supportées : FR · EN · AR · ES</span>
+    </div>
+
+    <!-- TOGGLE VITESSE (caché en mode Voix Clonée) -->
     <label class="toggle-row" id="toggleRow" for="toggleVitesse">
       <div class="toggle-info">
         <span class="toggle-label">Vitesse de lecture</span>
@@ -537,8 +585,13 @@
 </div>
 
 <script>
-  const WEBHOOK_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-v2';
-  const SHEET_ID    = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
+  const WEBHOOK_URL    = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-v2';
+  const WEBHOOK_VC_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/dubvc';
+  const SHEET_ID       = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
+
+  // Mapping langue → code court pour Voix Clonée
+  const LANG_VC_MAP = { 'Français': 'fr', 'Anglais': 'en', 'Espagnol': 'es', 'Arabe': 'ar' };
+
   let activeTab = 'upload';
   let droppedFile = null;
   let pollTimer = null;
@@ -557,8 +610,39 @@
     }
   }
 
+  // TOGGLE VOIX CLONEE
+  function onToggleVoixClonee(checkbox) {
+    const vcRow   = document.getElementById('vcToggleRow');
+    const vcDesc  = document.getElementById('vcToggleDesc');
+    const vcNote  = document.getElementById('vc-note');
+    const voixFld = document.getElementById('voix-field');
+    const speedFld = document.getElementById('toggleRow');
+
+    if (checkbox.checked) {
+      vcRow.classList.add('vc-active');
+      vcDesc.innerHTML = '<span class="badge" style="background:#0e1a2e;border-color:#2a4a7a;color:#93c5fd;">ON</span> voix clonée personnalisée';
+      vcNote.style.display = 'block';
+      voixFld.style.display = 'none';
+      speedFld.style.display = 'none';
+      // Forcer le tab Google Drive et verrouiller les autres
+      switchTab('drive');
+      document.getElementById('tab-upload').classList.add('locked');
+      document.getElementById('tab-youtube').classList.add('locked');
+    } else {
+      vcRow.classList.remove('vc-active');
+      vcDesc.innerHTML = '<span class="badge badge-off">OFF</span> utilise une voix OpenAI standard';
+      vcNote.style.display = 'none';
+      voixFld.style.display = '';
+      speedFld.style.display = '';
+      document.getElementById('tab-upload').classList.remove('locked');
+      document.getElementById('tab-youtube').classList.remove('locked');
+    }
+  }
+
   // TAB SWITCH
   function switchTab(tab) {
+    // En mode Voix Clonée, seul le tab Drive est autorisé
+    if (document.getElementById('toggleVoixClonee').checked && tab !== 'drive') return;
     activeTab = tab;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -663,6 +747,53 @@
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Envoi en cours...';
 
+    const isVoixClonee = document.getElementById('toggleVoixClonee').checked;
+
+    // ── VOIX CLONEE PATH ──
+    if (isVoixClonee) {
+      const driveUrl    = document.getElementById('driveUrl').value.trim();
+      const langDoublage = document.getElementById('langueDoublage').value;
+      const targetLang  = LANG_VC_MAP[langDoublage];
+
+      if (!targetLang) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
+        showError('La langue "' + langDoublage + '" n\'est pas supportée en mode Voix Clonée. Utilisez : Français, Anglais, Espagnol ou Arabe.');
+        return;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+      try {
+        const response = await fetch(WEBHOOK_VC_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ driveUrl, targetLang }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
+        document.getElementById('btn-drive-folder-async').href = 'https://drive.google.com/drive/my-drive';
+        document.getElementById('msg-success-async').style.display = 'block';
+
+      } catch (err) {
+        clearTimeout(timeoutId);
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
+        if (err.name === 'AbortError') {
+          showError('Le serveur ne répond pas. Vérifiez votre connexion et réessayez.');
+        } else {
+          showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+        }
+      }
+      return;
+    }
+
+    // ── DOUBLAGE STANDARD PATH (inchangé) ──
     const jobId = crypto.randomUUID();
     const destFolderUrl = document.getElementById('destFolderUrl').value.trim();
     const vitesse = document.getElementById('toggleVitesse').checked ? '1' : '1.7';
@@ -800,6 +931,12 @@ if (data.table && data.table.rows && data.table.rows.length > 0) {
     const toggle = document.getElementById('toggleVitesse');
     toggle.checked = false;
     onToggleVitesse(toggle);
+    // Réinitialiser le mode Voix Clonée si actif
+    const vcToggle = document.getElementById('toggleVoixClonee');
+    if (vcToggle.checked) {
+      vcToggle.checked = false;
+      onToggleVoixClonee(vcToggle);
+    }
   }
 
   function abandonPolling() {
