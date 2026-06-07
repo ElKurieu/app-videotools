@@ -509,7 +509,7 @@
       <div class="toggle-info">
         <span class="toggle-label">Vitesse de lecture</span>
         <span class="toggle-desc" id="toggleDesc">
-          <span class="badge" id="badgeActuel">x1.7</span> accélération activée par défaut
+          <span class="badge" id="badgeActuel">x1.5</span> accélération activée par défaut
         </span>
       </div>
       <div class="toggle-switch">
@@ -606,7 +606,7 @@
       desc.innerHTML = '<span class="badge badge-off">x1</span> sans accélération';
     } else {
       row.classList.remove('no-accel');
-      desc.innerHTML = '<span class="badge">x1.7</span> accélération activée par défaut';
+      desc.innerHTML = '<span class="badge">x1.5</span> accélération activée par défaut';
     }
   }
 
@@ -769,7 +769,7 @@
         const response = await fetch(WEBHOOK_VC_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ driveUrl, targetLang }),
+          body: JSON.stringify({ driveUrl, targetLang, chatId: '5991850378' }),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
@@ -798,7 +798,7 @@
     // ── DOUBLAGE STANDARD PATH (inchangé) ──
     const jobId = crypto.randomUUID();
     const destFolderUrl = document.getElementById('destFolderUrl').value.trim();
-    const vitesse = document.getElementById('toggleVitesse').checked ? '1' : '1.7';
+    const vitesse = document.getElementById('toggleVitesse').checked ? '1' : '1.5';
 
     const formData = new FormData();
     const fileToSend = (fileInput.files && fileInput.files[0]) || droppedFile;
