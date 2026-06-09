@@ -230,7 +230,7 @@
       transform: translateX(18px); background: #f0ede4;
     }
 
-    /* VOIX CLONEE */
+    /* VOIX CLONEE (XTTS) */
     .toggle-row.vc-active {
       border-color: #4a6a9a;
       background: #080c14;
@@ -250,6 +250,27 @@
       display: none;
     }
     .vc-note strong { display: block; margin-bottom: 4px; font-size: 13px; }
+
+    /* VOIX CLONEE V2 (ElevenLabs) */
+    .toggle-row.vc2-active {
+      border-color: #6d28d9;
+      background: #060412;
+    }
+    .toggle-row.vc2-active .toggle-switch input:checked + .toggle-track {
+      background: #3b1a7a;
+    }
+    .vc2-note {
+      background: #060412;
+      border: 1px solid #2a1050;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 12px;
+      color: #c4b5fd;
+      margin-bottom: 20px;
+      line-height: 1.7;
+      display: none;
+    }
+    .vc2-note strong { display: block; margin-bottom: 4px; font-size: 13px; }
 
     /* SUBMIT */
     .btn-submit {
@@ -483,7 +504,7 @@
       </div>
     </div>
 
-    <!-- TOGGLE VOIX CLONEE -->
+    <!-- TOGGLE VOIX CLONEE (XTTS) -->
     <label class="toggle-row" id="vcToggleRow" for="toggleVoixClonee">
       <div class="toggle-info">
         <span class="toggle-label">🎤 Voix Clonée</span>
@@ -497,11 +518,32 @@
       </div>
     </label>
 
-    <!-- NOTE VOIX CLONEE (visible uniquement quand activé) -->
+    <!-- NOTE VOIX CLONEE XTTS -->
     <div class="vc-note" id="vc-note">
       <strong>🎤 Mode Voix Clonée activé</strong>
       Traitement via le modèle vocal personnalisé — résultat livré par <strong>Telegram</strong>.<br>
       <span style="color:#6b8ec5;">Source : Google Drive uniquement · Langues supportées : FR · EN · AR · ES</span>
+    </div>
+
+    <!-- TOGGLE VOIX CLONEE V2 (ElevenLabs) -->
+    <label class="toggle-row" id="vcV2ToggleRow" for="toggleVoixCloneeV2">
+      <div class="toggle-info">
+        <span class="toggle-label">⚡ Voix Clonée <span style="color:#a78bfa; font-weight:600;">ElevenLabs</span></span>
+        <span class="toggle-desc" id="vcV2ToggleDesc">
+          <span class="badge badge-off">OFF</span> zéro hallucination · qualité premium
+        </span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="toggleVoixCloneeV2" onchange="onToggleVoixCloneeV2(this)" />
+        <span class="toggle-track"></span>
+      </div>
+    </label>
+
+    <!-- NOTE ELEVENLABS -->
+    <div class="vc2-note" id="vc2-note">
+      <strong>⚡ Mode ElevenLabs activé</strong>
+      Voix clonée haute qualité — zéro hallucination, résultat livré par <strong>Telegram</strong>.<br>
+      <span style="color:#7c5cbf;">Source : Google Drive uniquement · Langues supportées : FR · EN · AR · ES</span>
     </div>
 
     <!-- TOGGLE VITESSE (caché en mode Voix Clonée) -->
@@ -585,11 +627,11 @@
 </div>
 
 <script>
-  const WEBHOOK_URL    = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-v2';
-  const WEBHOOK_VC_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/dubvc';
-  const SHEET_ID       = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
+  const WEBHOOK_URL     = 'https://n8n.srv1037761.hstgr.cloud/webhook/doublage-v2';
+  const WEBHOOK_VC_URL  = 'https://n8n.srv1037761.hstgr.cloud/webhook/dubvc';
+  const WEBHOOK_VC2_URL = 'https://n8n.srv1037761.hstgr.cloud/webhook/dubvc2';
+  const SHEET_ID        = '1gjWtn2q3GkTPesYmcV1u5z0EDRRIxP_wFTx8-aoVGWc';
 
-  // Mapping langue → code court pour Voix Clonée
   const LANG_VC_MAP = { 'Français': 'fr', 'Anglais': 'en', 'Espagnol': 'es', 'Arabe': 'ar' };
 
   let activeTab = 'upload';
@@ -610,7 +652,7 @@
     }
   }
 
-  // TOGGLE VOIX CLONEE
+  // TOGGLE VOIX CLONEE (XTTS)
   function onToggleVoixClonee(checkbox) {
     const vcRow   = document.getElementById('vcToggleRow');
     const vcDesc  = document.getElementById('vcToggleDesc');
@@ -619,12 +661,17 @@
     const speedFld = document.getElementById('toggleRow');
 
     if (checkbox.checked) {
+      // Désactiver ElevenLabs V2 si actif
+      const vc2Toggle = document.getElementById('toggleVoixCloneeV2');
+      if (vc2Toggle.checked) {
+        vc2Toggle.checked = false;
+        onToggleVoixCloneeV2(vc2Toggle);
+      }
       vcRow.classList.add('vc-active');
       vcDesc.innerHTML = '<span class="badge" style="background:#0e1a2e;border-color:#2a4a7a;color:#93c5fd;">ON</span> voix clonée personnalisée';
       vcNote.style.display = 'block';
       voixFld.style.display = 'none';
       speedFld.style.display = 'none';
-      // Forcer le tab Google Drive et verrouiller les autres
       switchTab('drive');
       document.getElementById('tab-upload').classList.add('locked');
       document.getElementById('tab-youtube').classList.add('locked');
@@ -639,10 +686,45 @@
     }
   }
 
+  // TOGGLE VOIX CLONEE V2 (ElevenLabs)
+  function onToggleVoixCloneeV2(checkbox) {
+    const vc2Row  = document.getElementById('vcV2ToggleRow');
+    const vc2Desc = document.getElementById('vcV2ToggleDesc');
+    const vc2Note = document.getElementById('vc2-note');
+    const voixFld = document.getElementById('voix-field');
+    const speedFld = document.getElementById('toggleRow');
+
+    if (checkbox.checked) {
+      // Désactiver XTTS si actif
+      const vcToggle = document.getElementById('toggleVoixClonee');
+      if (vcToggle.checked) {
+        vcToggle.checked = false;
+        onToggleVoixClonee(vcToggle);
+      }
+      vc2Row.classList.add('vc2-active');
+      vc2Desc.innerHTML = '<span class="badge" style="background:#1a0a3a;border-color:#5b21b6;color:#a78bfa;">ON</span> voix clonée ElevenLabs';
+      vc2Note.style.display = 'block';
+      voixFld.style.display = 'none';
+      speedFld.style.display = 'none';
+      switchTab('drive');
+      document.getElementById('tab-upload').classList.add('locked');
+      document.getElementById('tab-youtube').classList.add('locked');
+    } else {
+      vc2Row.classList.remove('vc2-active');
+      vc2Desc.innerHTML = '<span class="badge badge-off">OFF</span> zéro hallucination · qualité premium';
+      vc2Note.style.display = 'none';
+      voixFld.style.display = '';
+      speedFld.style.display = '';
+      document.getElementById('tab-upload').classList.remove('locked');
+      document.getElementById('tab-youtube').classList.remove('locked');
+    }
+  }
+
   // TAB SWITCH
   function switchTab(tab) {
-    // En mode Voix Clonée, seul le tab Drive est autorisé
-    if (document.getElementById('toggleVoixClonee').checked && tab !== 'drive') return;
+    const vcActive  = document.getElementById('toggleVoixClonee').checked;
+    const vc2Active = document.getElementById('toggleVoixCloneeV2').checked;
+    if ((vcActive || vc2Active) && tab !== 'drive') return;
     activeTab = tab;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -747,9 +829,55 @@
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner"></div> Envoi en cours...';
 
-    const isVoixClonee = document.getElementById('toggleVoixClonee').checked;
+    const isVoixClonee   = document.getElementById('toggleVoixClonee').checked;
+    const isVoixCloneeV2 = document.getElementById('toggleVoixCloneeV2').checked;
 
-    // ── VOIX CLONEE PATH ──
+    // ── ELEVENLABS PATH ──
+    if (isVoixCloneeV2) {
+      const driveUrl    = document.getElementById('driveUrl').value.trim();
+      const langDoublage = document.getElementById('langueDoublage').value;
+      const targetLang  = LANG_VC_MAP[langDoublage];
+
+      if (!targetLang) {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
+        showError('La langue "' + langDoublage + '" n\'est pas supportée en mode ElevenLabs. Utilisez : Français, Anglais, Espagnol ou Arabe.');
+        return;
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+      try {
+        const response = await fetch(WEBHOOK_VC2_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ driveUrl, targetLang, chatId: '5991850378' }),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
+        document.getElementById('msg-success-async').querySelector('strong').textContent =
+          '⏱ Doublage ElevenLabs lancé — langue cible : ' + langDoublage + ' (' + targetLang.toUpperCase() + ')';
+        document.getElementById('msg-success-async').style.display = 'block';
+
+      } catch (err) {
+        clearTimeout(timeoutId);
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
+        if (err.name === 'AbortError') {
+          showError('Le serveur ne répond pas. Vérifiez votre connexion et réessayez.');
+        } else {
+          showError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+        }
+      }
+      return;
+    }
+
+    // ── VOIX CLONEE XTTS PATH ──
     if (isVoixClonee) {
       const driveUrl    = document.getElementById('driveUrl').value.trim();
       const langDoublage = document.getElementById('langueDoublage').value;
@@ -795,7 +923,7 @@
       return;
     }
 
-    // ── DOUBLAGE STANDARD PATH (inchangé) ──
+    // ── DOUBLAGE STANDARD PATH ──
     const jobId = crypto.randomUUID();
     const destFolderUrl = document.getElementById('destFolderUrl').value.trim();
     const vitesse = document.getElementById('toggleVitesse').checked ? '1' : '1.5';
@@ -831,7 +959,6 @@
 
       if (!response.ok) throw new Error('HTTP ' + response.status);
 
-      // Démarrer le polling
       resetForm();
       btn.disabled = false;
       btn.innerHTML = '<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg> Lancer le doublage';
@@ -854,7 +981,7 @@
   // POLLING via Google Sheets gviz API
   function startPolling(jobId, destFolderUrl) {
     const startTime = Date.now();
-    const MAX_POLL_MS = 10 * 60 * 1000; // 10 minutes max
+    const MAX_POLL_MS = 10 * 60 * 1000;
     let dots = 0;
 
     const progressEl = document.getElementById('msg-progress');
@@ -878,27 +1005,25 @@
       }
 
       try {
-const query = encodeURIComponent("SELECT * WHERE A='" + jobId + "'");
-const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tq=' + query + '&tqx=out:json';
-const res = await fetch(url);
-if (!res.ok) return;
-const text = await res.text();
-// Supprimer l'enveloppe JSONP : /*O_o*/\ngoogle.visualization.Query.setResponse({...});
-const jsonStr = text.replace(/^[^(]+\(/, '').replace(/\);\s*$/, '');
-const data = JSON.parse(jsonStr);
-if (data.table && data.table.rows && data.table.rows.length > 0) {
-  const cols = data.table.cols || [];
-  const row = data.table.rows[0].c;
-  const get = (name) => {
-    const i = cols.findIndex(c => c.label === name);
-    return (i >= 0 && row[i] && row[i].v) ? row[i].v : '';
-  };
-  const driveUrl  = get('driveUrl');
-  const driveView = get('driveView');
-  const errorMsg  = get('error');
+        const query = encodeURIComponent("SELECT * WHERE A='" + jobId + "'");
+        const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tq=' + query + '&tqx=out:json';
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const text = await res.text();
+        const jsonStr = text.replace(/^[^(]+\(/, '').replace(/\);\s*$/, '');
+        const data = JSON.parse(jsonStr);
+        if (data.table && data.table.rows && data.table.rows.length > 0) {
+          const cols = data.table.cols || [];
+          const row = data.table.rows[0].c;
+          const get = (name) => {
+            const i = cols.findIndex(c => c.label === name);
+            return (i >= 0 && row[i] && row[i].v) ? row[i].v : '';
+          };
+          const driveUrl  = get('driveUrl');
+          const driveView = get('driveView');
+          const errorMsg  = get('error');
 
-  if (errorMsg) {
-            // Erreur remontée par n8n
+          if (errorMsg) {
             clearInterval(pollTimer);
             pollTimer = null;
             progressEl.style.display = 'none';
@@ -933,12 +1058,10 @@ if (data.table && data.table.rows && data.table.rows.length > 0) {
     const toggle = document.getElementById('toggleVitesse');
     toggle.checked = false;
     onToggleVitesse(toggle);
-    // Réinitialiser le mode Voix Clonée si actif
     const vcToggle = document.getElementById('toggleVoixClonee');
-    if (vcToggle.checked) {
-      vcToggle.checked = false;
-      onToggleVoixClonee(vcToggle);
-    }
+    if (vcToggle.checked) { vcToggle.checked = false; onToggleVoixClonee(vcToggle); }
+    const vc2Toggle = document.getElementById('toggleVoixCloneeV2');
+    if (vc2Toggle.checked) { vc2Toggle.checked = false; onToggleVoixCloneeV2(vc2Toggle); }
   }
 
   function abandonPolling() {
