@@ -671,7 +671,7 @@
       <div class="field">
         <label>Source</label>
         <div class="source-btns">
-          <button class="source-btn active" data-src="url" onclick="setManualSource('url')">URL YouTube / Drive</button>
+          <button class="source-btn active" data-src="url" onclick="setManualSource('url')">URL YouTube / Drive / TikTok</button>
           <button class="source-btn" data-src="pc" onclick="setManualSource('pc')">Fichier depuis le PC</button>
         </div>
       </div>
@@ -681,14 +681,14 @@
 
       <!-- Etape 1 : charger la video -->
       <div class="field">
-        <label>URL YouTube ou Google Drive</label>
+        <label>URL YouTube, Google Drive ou TikTok</label>
         <div class="input-with-btn">
           <input type="url" id="manual-url"
-                 placeholder="https://www.youtube.com/watch?v=... ou https://drive.google.com/file/d/..."
+                 placeholder="https://www.youtube.com/watch?v=... ou https://drive.google.com/file/d/... ou https://www.tiktok.com/@.../video/..."
                  onkeydown="if(event.key==='Enter') loadManualVideo()" />
           <button class="btn-load" id="btn-load" onclick="loadManualVideo()">Charger</button>
         </div>
-        <p class="field-hint">YouTube : timeline interactive — Google Drive : apercu + timestamps a saisir</p>
+        <p class="field-hint">YouTube : timeline interactive — Google Drive / TikTok : apercu + timestamps a saisir</p>
       </div>
 
       <!-- Player YouTube (visible apres chargement YouTube) -->
@@ -911,7 +911,7 @@
     </div>
     <div class="info-card">
       <h3>Sources supportees</h3>
-      <p>IA : YouTube + Google Drive. Manuel : YouTube + Google Drive. Duree minimum recommandee : 10 minutes.</p>
+      <p>IA : YouTube + Google Drive. Manuel : YouTube + Google Drive + TikTok. Duree minimum recommandee : 10 minutes.</p>
     </div>
     <div class="info-card">
       <h3>Confidentialite</h3>
@@ -1128,7 +1128,7 @@
   let isDragging      = null;
   let cursorRaf       = null;
   let previewTimeout  = null;
-  let manualSourceType = 'youtube'; // 'youtube' | 'drive'
+  let manualSourceType = 'youtube'; // 'youtube' | 'drive' | 'tiktok' | 'pc'
   let manualSpeed = 1.0;
   let shotFormat = '16:9';
 
@@ -1180,12 +1180,15 @@
     const driveFileId = extractDriveFileId(url);
     const ytVideoId   = extractVideoId(url);
 
-    if (driveFileId) {
+    if (/tiktok\.com/i.test(url)) {
+      loadTikTokPreview(url);
+
+    } else if (driveFileId) {
       loadDrivePreview(driveFileId);
     } else if (ytVideoId) {
       loadYouTubePreview(ytVideoId);
     } else {
-      alert('URL non reconnue. Utilisez une URL YouTube ou Google Drive.');
+      alert('URL non reconnue. Utilisez une URL YouTube, Google Drive ou TikTok.');
     }
   }
 
@@ -1194,6 +1197,7 @@
 
   function loadDrivePreview(fileId) {
     manualSourceType = 'drive';
+    resetPreviewShape();
     document.getElementById('yt-player-wrap').style.display    = 'none';
     document.getElementById('timeline-section').style.display  = 'none';
 
@@ -1225,6 +1229,49 @@
     const overlay = document.getElementById('drive-overlay');
     overlay.classList.add('hidden');
     if (drivePreviewTimer) { clearTimeout(drivePreviewTimer); drivePreviewTimer = null; }
+  }
+
+  // ── Chargement TikTok (apercu officiel + timestamps a saisir, comme Drive) ──
+  function resetPreviewShape() {
+    const wrap = document.getElementById('drive-player-wrap');
+    wrap.style.aspectRatio = ''; wrap.style.maxWidth = ''; wrap.style.margin = '';
+  }
+
+  function loadTikTokPreview(url) {
+    manualSourceType = 'tiktok';
+    document.getElementById('yt-player-wrap').style.display   = 'none';
+    document.getElementById('timeline-section').style.display = 'none';
+    const wrap    = document.getElementById('drive-player-wrap');
+    const overlay = document.getElementById('drive-overlay');
+    const msg     = document.getElementById('drive-overlay-msg');
+    const iframe  = document.getElementById('drive-iframe');
+    // format vertical pour l'apercu TikTok
+    wrap.style.aspectRatio = '9/16'; wrap.style.maxWidth = '340px'; wrap.style.margin = '0 auto 1.5rem';
+    overlay.classList.remove('hidden', 'no-preview');
+    if (drivePreviewTimer) { clearTimeout(drivePreviewTimer); drivePreviewTimer = null; }
+    const m = url.match(/\/video\/(\d+)/);
+    if (m) {
+      msg.textContent = "Chargement de l'apercu TikTok...";
+      iframe.src = 'https://www.tiktok.com/embed/v2/' + m[1];
+      drivePreviewTimer = setTimeout(function() {
+        if (!overlay.classList.contains('hidden')) {
+          overlay.classList.add('no-preview');
+          msg.textContent = "Apercu TikTok non disponible.\nSaisissez les timestamps manuellement ci-dessous.";
+        }
+      }, 8000);
+    } else {
+      // lien court (vm.tiktok.com) : pas d'identifiant, donc pas d'apercu possible
+      iframe.src = 'about:blank';
+      setTimeout(function() {
+        overlay.classList.remove('hidden');
+        overlay.classList.add('no-preview');
+        msg.textContent = "Lien TikTok court : pas d'apercu possible.\nReperez les moments dans l'appli TikTok, puis saisissez les timestamps ci-dessous.";
+      }, 300);
+    }
+    wrap.style.display = 'block';
+    document.getElementById('drive-ts-section').style.display      = 'block';
+    document.getElementById('manual-submit-section').style.display = 'block';
+    updateDriveDuration();
   }
 
   function tsToSec(ts) {
@@ -1529,7 +1576,7 @@
 
     let startSec, endSec;
 
-    if (manualSourceType === 'drive') {
+    if (manualSourceType === 'drive' || manualSourceType === 'tiktok') {
       startSec = tsToSec(document.getElementById('drive-start').value);
       endSec   = tsToSec(document.getElementById('drive-end').value);
       if (endSec <= startSec) { alert('La fin doit etre apres le debut.'); return; }
@@ -1548,7 +1595,7 @@
       const resp = await fetch(WEBHOOK_MANUAL_URL, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ url, email, start: secToHMS(startSec), end: secToHMS(endSec), speed: manualSpeed })
+        body: JSON.stringify({ url, email, start: secToHMS(startSec), end: secToHMS(endSec), speed: manualSpeed, format: shotFormat })
       });
       let data = {};
       try { data = await resp.json(); } catch(e) {}
