@@ -60,7 +60,7 @@
     /* SOURCE TABS */
     .tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
       margin-bottom: 28px;
     }
@@ -412,6 +412,12 @@
         </svg>
         YouTube
       </button>
+      <button class="tab" id="tab-facebook" onclick="switchTab('facebook')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/>
+        </svg>
+        Facebook
+      </button>
     </div>
 
     <!-- PANEL UPLOAD -->
@@ -451,6 +457,19 @@
       </div>
       <div style="background:#1a0000; border:1px solid #3a0a0a; border-radius:8px; padding:12px 14px; font-size:12px; color:#f87171;">
         ⚠️ Vidéos longues : le téléchargement peut prendre 1 à 2 minutes avant le début du traitement.
+      </div>
+    </div>
+
+    <!-- PANEL FACEBOOK -->
+    <div class="panel" id="panel-facebook">
+      <div class="field">
+        <label>Lien Facebook <span>*</span></label>
+        <input type="url" id="facebookUrl" placeholder="https://www.facebook.com/share/v/..." />
+        <div class="field-error" id="err-facebook">Lien Facebook invalide</div>
+        <div class="field-help">Vidéos et Reels Facebook publics (bouton « Partager » → « Copier le lien »)</div>
+      </div>
+      <div style="background:#0a1020; border:1px solid #1e3a6e; border-radius:8px; padding:12px 14px; font-size:12px; color:#93c5fd;">
+        ⚠️ Vidéos publiques uniquement, 1 heure maximum. Le téléchargement peut prendre quelques minutes avant le début du traitement.
       </div>
     </div>
 
@@ -675,6 +694,7 @@
       switchTab('drive');
       document.getElementById('tab-upload').classList.add('locked');
       document.getElementById('tab-youtube').classList.add('locked');
+      document.getElementById('tab-facebook').classList.add('locked');
     } else {
       vcRow.classList.remove('vc-active');
       vcDesc.innerHTML = '<span class="badge badge-off">OFF</span> utilise une voix OpenAI standard';
@@ -683,6 +703,7 @@
       speedFld.style.display = '';
       document.getElementById('tab-upload').classList.remove('locked');
       document.getElementById('tab-youtube').classList.remove('locked');
+      document.getElementById('tab-facebook').classList.remove('locked');
     }
   }
 
@@ -709,6 +730,7 @@
       switchTab('drive');
       document.getElementById('tab-upload').classList.add('locked');
       document.getElementById('tab-youtube').classList.add('locked');
+      document.getElementById('tab-facebook').classList.add('locked');
     } else {
       vc2Row.classList.remove('vc2-active');
       vc2Desc.innerHTML = '<span class="badge badge-off">OFF</span> zéro hallucination · qualité premium';
@@ -717,6 +739,7 @@
       speedFld.style.display = '';
       document.getElementById('tab-upload').classList.remove('locked');
       document.getElementById('tab-youtube').classList.remove('locked');
+      document.getElementById('tab-facebook').classList.remove('locked');
     }
   }
 
@@ -797,6 +820,18 @@
       } else {
         document.getElementById('err-youtube').style.display = 'none';
         document.getElementById('youtubeUrl').classList.remove('invalid');
+      }
+    }
+    if (activeTab === 'facebook') {
+      const url = document.getElementById('facebookUrl').value.trim();
+      const fbPattern = /^https?:\/\/([a-z0-9-]+\.)?(facebook\.com|fb\.watch)\//i;
+      if (!url || !fbPattern.test(url)) {
+        document.getElementById('err-facebook').style.display = 'block';
+        document.getElementById('facebookUrl').classList.add('invalid');
+        ok = false;
+      } else {
+        document.getElementById('err-facebook').style.display = 'none';
+        document.getElementById('facebookUrl').classList.remove('invalid');
       }
     }
     if (!document.getElementById('langueOrigine').value) {
@@ -934,6 +969,8 @@
       formData.append('file', fileToSend);
     } else if (activeTab === 'youtube') {
       formData.append('youtubeUrl', document.getElementById('youtubeUrl').value.trim());
+    } else if (activeTab === 'facebook') {
+      formData.append('facebookUrl', document.getElementById('facebookUrl').value.trim());
     } else {
       formData.append('driveUrl', document.getElementById('driveUrl').value.trim());
     }
@@ -1050,6 +1087,7 @@
     fileSelectedName.textContent = '';
     document.getElementById('driveUrl').value = '';
     document.getElementById('youtubeUrl').value = '';
+    document.getElementById('facebookUrl').value = '';
     document.getElementById('destFolderUrl').value = '';
     document.getElementById('langueOrigine').value = '';
     document.getElementById('langueDoublage').value = '';
