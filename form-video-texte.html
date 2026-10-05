@@ -420,7 +420,7 @@
       }
 
       try {
-        const query = encodeURIComponent("SELECT B,C,D,E WHERE A='" + jobId + "'");
+        const query = encodeURIComponent("SELECT C,D,E,G WHERE A='" + jobId + "'");
         const url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tq=' + query + '&tqx=out:json';
         const res = await fetch(url);
         if (!res.ok) return;
