@@ -86,6 +86,7 @@
       background: #1a1500;
       color: #D4AF37;
     }
+    #tab-tiktok { grid-column: 1 / -1; }
     .tab.locked {
       opacity: 0.35;
       cursor: not-allowed;
@@ -418,6 +419,12 @@
         </svg>
         Facebook
       </button>
+      <button class="tab" id="tab-tiktok" onclick="switchTab('tiktok')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16.6 5.82A4.28 4.28 0 0115.54 3h-3.09v12.4a2.59 2.59 0 01-2.59 2.5 2.59 2.59 0 01-2.59-2.59 2.59 2.59 0 013.39-2.46V9.71a5.68 5.68 0 00-.8-.06 5.68 5.68 0 00-5.68 5.68A5.68 5.68 0 009.86 21a5.68 5.68 0 005.68-5.68V9.01a7.35 7.35 0 004.3 1.38V7.3a4.3 4.3 0 01-3.24-1.48z"/>
+        </svg>
+        TikTok / Instagram
+      </button>
     </div>
 
     <!-- PANEL UPLOAD -->
@@ -470,6 +477,19 @@
       </div>
       <div style="background:#0a1020; border:1px solid #1e3a6e; border-radius:8px; padding:12px 14px; font-size:12px; color:#93c5fd;">
         ⚠️ Vidéos publiques uniquement, 1 heure maximum. Le téléchargement peut prendre quelques minutes avant le début du traitement.
+      </div>
+    </div>
+
+    <!-- PANEL TIKTOK / INSTAGRAM (mode ElevenLabs) -->
+    <div class="panel" id="panel-tiktok">
+      <div class="field">
+        <label>Lien TikTok ou Instagram <span>*</span></label>
+        <input type="url" id="tiktokUrl" placeholder="https://vm.tiktok.com/... ou https://www.instagram.com/reel/..." />
+        <div class="field-error" id="err-tiktok">Lien TikTok ou Instagram invalide</div>
+        <div class="field-help">Vidéos publiques (bouton « Partager » → « Copier le lien »)</div>
+      </div>
+      <div style="background:#060412; border:1px solid #2a1050; border-radius:8px; padding:12px 14px; font-size:12px; color:#a78bfa;">
+        ⚡ Doublage ElevenLabs uniquement (activé automatiquement). Vidéos publiques, 1 heure maximum.
       </div>
     </div>
 
@@ -562,7 +582,7 @@
     <div class="vc2-note" id="vc2-note">
       <strong>⚡ Mode ElevenLabs activé</strong>
       Voix clonée haute qualité — zéro hallucination, résultat livré par <strong>Telegram</strong>.<br>
-      <span style="color:#7c5cbf;">Source : Google Drive uniquement · Langues supportées : FR · EN · AR · ES</span>
+      <span style="color:#7c5cbf;">Source : Google Drive, Facebook, TikTok ou Instagram · Langues supportées : FR · EN · AR · ES</span>
     </div>
 
     <!-- TOGGLE VITESSE (caché en mode Voix Clonée) -->
@@ -695,6 +715,7 @@
       document.getElementById('tab-upload').classList.add('locked');
       document.getElementById('tab-youtube').classList.add('locked');
       document.getElementById('tab-facebook').classList.add('locked');
+      document.getElementById('tab-tiktok').classList.add('locked');
     } else {
       vcRow.classList.remove('vc-active');
       vcDesc.innerHTML = '<span class="badge badge-off">OFF</span> utilise une voix OpenAI standard';
@@ -704,6 +725,7 @@
       document.getElementById('tab-upload').classList.remove('locked');
       document.getElementById('tab-youtube').classList.remove('locked');
       document.getElementById('tab-facebook').classList.remove('locked');
+      document.getElementById('tab-tiktok').classList.remove('locked');
     }
   }
 
@@ -727,10 +749,9 @@
       vc2Note.style.display = 'block';
       voixFld.style.display = 'none';
       speedFld.style.display = 'none';
-      switchTab('drive');
+      if (['upload', 'youtube'].includes(activeTab)) switchTab('drive');
       document.getElementById('tab-upload').classList.add('locked');
       document.getElementById('tab-youtube').classList.add('locked');
-      document.getElementById('tab-facebook').classList.add('locked');
     } else {
       vc2Row.classList.remove('vc2-active');
       vc2Desc.innerHTML = '<span class="badge badge-off">OFF</span> zéro hallucination · qualité premium';
@@ -739,7 +760,8 @@
       speedFld.style.display = '';
       document.getElementById('tab-upload').classList.remove('locked');
       document.getElementById('tab-youtube').classList.remove('locked');
-      document.getElementById('tab-facebook').classList.remove('locked');
+      // TikTok / Instagram n'existe qu'en mode ElevenLabs : retour sur Drive
+      if (activeTab === 'tiktok') switchTab('drive');
     }
   }
 
@@ -747,7 +769,14 @@
   function switchTab(tab) {
     const vcActive  = document.getElementById('toggleVoixClonee').checked;
     const vc2Active = document.getElementById('toggleVoixCloneeV2').checked;
-    if ((vcActive || vc2Active) && tab !== 'drive') return;
+    if (vcActive && tab !== 'drive') return;
+    if (vc2Active && !['drive', 'facebook', 'tiktok'].includes(tab)) return;
+    // TikTok / Instagram : seulement avec ElevenLabs, qu'on active automatiquement
+    if (tab === 'tiktok' && !vc2Active) {
+      const t2 = document.getElementById('toggleVoixCloneeV2');
+      t2.checked = true;
+      onToggleVoixCloneeV2(t2);
+    }
     activeTab = tab;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -834,6 +863,18 @@
         document.getElementById('facebookUrl').classList.remove('invalid');
       }
     }
+    if (activeTab === 'tiktok') {
+      const url = document.getElementById('tiktokUrl').value.trim();
+      const ttPattern = /^https?:\/\/([a-z0-9-]+\.)?(tiktok\.com|instagram\.com)\//i;
+      if (!url || !ttPattern.test(url)) {
+        document.getElementById('err-tiktok').style.display = 'block';
+        document.getElementById('tiktokUrl').classList.add('invalid');
+        ok = false;
+      } else {
+        document.getElementById('err-tiktok').style.display = 'none';
+        document.getElementById('tiktokUrl').classList.remove('invalid');
+      }
+    }
     if (!document.getElementById('langueOrigine').value) {
       document.getElementById('err-origine').style.display = 'block';
       document.getElementById('langueOrigine').classList.add('invalid');
@@ -869,7 +910,9 @@
 
     // ── ELEVENLABS PATH ──
     if (isVoixCloneeV2) {
-      const driveUrl    = document.getElementById('driveUrl').value.trim();
+      const driveUrl    = activeTab === 'drive' ? document.getElementById('driveUrl').value.trim() : '';
+      const sourceUrl   = activeTab === 'facebook' ? document.getElementById('facebookUrl').value.trim()
+                        : activeTab === 'tiktok' ? document.getElementById('tiktokUrl').value.trim() : '';
       const langDoublage = document.getElementById('langueDoublage').value;
       const targetLang  = LANG_VC_MAP[langDoublage];
 
@@ -887,7 +930,7 @@
         const response = await fetch(WEBHOOK_VC2_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ driveUrl, targetLang, chatId: '5991850378' }),
+          body: JSON.stringify({ driveUrl, sourceUrl, targetLang, chatId: '5991850378' }),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
@@ -1088,6 +1131,7 @@
     document.getElementById('driveUrl').value = '';
     document.getElementById('youtubeUrl').value = '';
     document.getElementById('facebookUrl').value = '';
+    document.getElementById('tiktokUrl').value = '';
     document.getElementById('destFolderUrl').value = '';
     document.getElementById('langueOrigine').value = '';
     document.getElementById('langueDoublage').value = '';
